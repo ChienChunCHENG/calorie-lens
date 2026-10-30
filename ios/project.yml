@@ -4,6 +4,9 @@ options:
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
+packages:
+  CalorieCore:
+    path: Packages/CalorieCore
 settings:
   base:
     SWIFT_VERSION: "5.0"
@@ -22,6 +25,10 @@ targets:
       - path: Sources/CalorieLens
         excludes:
           - "**/.gitkeep"
+      - path: ../data/nutrition.json
+        buildPhase: resources
+    dependencies:
+      - package: CalorieCore
     info:
       path: Info.plist
       properties:

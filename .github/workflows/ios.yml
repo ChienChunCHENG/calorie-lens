@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - "ios/**"
+      - "data/nutrition.json"
+      - "spec/**"
+      - "tools/replay/**"
       - ".github/workflows/ios.yml"
   workflow_dispatch:
 
@@ -27,6 +30,24 @@ jobs:
           echo "Using $XC"
           sudo xcode-select -s "$XC/Contents/Developer"
           xcodebuild -version
+
+      - name: Set up Python (replay fixtures)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate golden replay fixtures
+        shell: bash
+        run: |
+          set -e
+          pip install -q -r tools/replay/requirements.txt
+          python tools/replay/export_fixtures.py --out "$RUNNER_TEMP/fixtures"
+
+      - name: CalorieCore unit tests (macOS host)
+        shell: bash
+        env:
+          CL_FIXTURES: ${{ runner.temp }}/fixtures
+        run: swift test --package-path ios/Packages/CalorieCore
 
       - name: Install XcodeGen
         run: brew install xcodegen
