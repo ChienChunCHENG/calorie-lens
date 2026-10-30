@@ -1,0 +1,997 @@
+{
+ "version": 1,
+ "generated": "2026-10-30",
+ "schema_note": "kcal_100g is per 100 g of the dish as served (cooked, edible portion) and EXCLUDES cooking-oil uptake for fried/stir-fried dishes (oil.yaml adder supplies it). min/typ/max = 90% interval.",
+ "dishes": [
+  {
+   "id": "rice_white",
+   "zh": "白飯",
+   "en": "Steamed white rice",
+   "kind": "solid",
+   "bulk": false,
+   "density_g_ml": {
+    "min": 0.6,
+    "typ": 0.7,
+    "max": 0.8
+   },
+   "kcal_100g": {
+    "min": 140,
+    "typ": 183,
+    "max": 200
+   },
+   "macros_100g": {
+    "p": 3.1,
+    "f": 0.3,
+    "c": 41.0
+   },
+   "oil_method": "steam",
+   "oil_g_per_100g": null,
+   "default_portion_g": {
+    "min": 140,
+    "typ": 210,
+    "max": 280
+   },
+   "container_prior": [
+    "bowl_small",
+    "bento_box",
+    "bowl_large"
+   ],
+   "tfda_refs": [
+    "A0550601"
+   ],
+   "origin": "direct",
+   "source": [
+    "TFDA A0550601 白飯",
+    "TFDA R1100101 免煮飯 (cross-check)",
+    "衛福部/國健署 食物代換表 (recalled from memory, about 70 kcal per 50 g cooked rice; verify)",
+    "density: FAO row 371 'Rice, white, boiled' 0.73 g/mL (RC own measurements)",
+    "density: FAO row 364 'Rice, boiled' 0.73 (KEN); row 642 'Rice, plain (rice + water)' 0.70 (KEN)",
+    "density: USDA FDC 168878 long-grain white cooked ~158 g/cup / 236.6 = 0.67 (recalled, unverified)",
+    "portion: 食物代換表: 1 碗 = ~200 g cooked rice (recalled); 便當 rice 200-250 g; min = 小碗 (~0.7 碗)"
+   ],
+   "confidence": "med",
+   "method_notes": "COOKED rice (not raw). TFDA A0550601: rice cooked in a rice cooker with 1.1x water, n=1, so no sd. typ = TFDA value 183. Max = typ +9%. Min deliberately lowered to 140 (below the generic -15% = 155): shops usually cook with 1.2-1.3x water and the 食物代換表 gives about 70 kcal per 1/4 bowl (~50 g) of cooked rice = ~140 kcal/100 g. TFDA R1100101 免煮飯 (retort rice pack) = 168 is a second reference. Typ may run high for shop rice."
+  },
+  {
+   "id": "lu_rou_fan",
+   "zh": "滷肉飯",
+   "en": "Braised pork rice",
+   "kind": "solid",
+   "bulk": false,
+   "density_g_ml": {
+    "min": 0.65,
+    "typ": 0.78,
+    "max": 0.95
+   },
+   "kcal_100g": {
+    "min": 172.0,
+    "typ": 225.8,
+    "max": 250.0
+   },
+   "macros_100g": {
+    "p": 4.4,
+    "f": 7.9,
+    "c": 33.6
+   },
+   "oil_method": "braise",
+   "oil_g_per_100g": null,
+   "default_portion_g": {
+    "min": 180,
+    "typ": 280,
+    "max": 420
+   },
+   "container_prior": [
+    "bowl_small",
+    "bowl_large"
+   ],
+   "tfda_refs": [
+    "A0550601",
+    "P1000301"
+   ],
+   "origin": "composed",
+   "source": [
+    "TFDA A0550601",
+    "TFDA P1000301",
+    "composition assumption",
+    "density: Closest analogue: FAO row 636 'Rice + meat' 0.73 (KEN) and row 637 'Rice + meat + vegetable' 0.83 (KEN)",
+    "portion: 小吃 小碗 ~200-250 g, 大碗 ~350-400 g (estimate: ~180-200 g rice + 50-80 g topping)"
+   ],
+   "confidence": "low",
+   "method_notes": "Composed, 1 item (do not segment). 白飯 cooked rice (A0550601) 80% by weight (183 kcal/100g, range 140-200); 肉燥/滷肉 incl. sauce (P1000301 肉燥) 20% by weight (397 kcal/100g, range 300-450). Weight fractions are an assumption (about 200 g rice + 50 g braised pork with sauce for a small bowl); TFDA P1000301 肉燥 is a single n=1 sample of a packaged minced-pork topping and is only a proxy for shop 滷肉 (belly pork + skin; fattier shops higher). Min/max = component ranges combined with fully correlated weights (conservative). Braised, so any added-oil adder should be ~0."
+  },
+  {
+   "id": "chicken_leg",
+   "zh": "雞腿",
+   "en": "Chicken drumstick (fried or braised)",
+   "kind": "solid",
+   "bulk": false,
+   "density_g_ml": {
+    "min": 0.8,
+    "typ": 0.95,
+    "max": 1.05
+   },
+   "kcal_100g": {
+    "min": 130,
+    "typ": 186,
+    "max": 285
+   },
+   "macros_100g": {
+    "p": 16.6,
+    "f": 13.1,
+    "c": 0.5
+   },
+   "oil_method": "deep_fry_breaded",
+   "oil_g_per_100g": {
+    "min": 4.0,
+    "max": 16.0
+   },
+   "default_portion_g": {
+    "min": 110,
+    "typ": 180,
+    "max": 300
+   },
+   "container_prior": [
+    "bento_box",
+    "plate_26cm"
+   ],
+   "tfda_refs": [
+    "I0404102",
+    "I0404302"
+   ],
+   "origin": "composed",
+   "source": [
+    "TFDA I0404102",
+    "TFDA I0404302",
+    "cook-yield assumption 0.75",
+    "density: No FAO fried-chicken row. Physical estimate: muscle ~1.05, bone ~1.8, porous crust/skin gaps lower it.",
+    "density: FAO 'Pork, with bone, boiled' 0.63-0.70 (KEN) are bulk pile densities: rejected as wrong basis.",
+    "portion: Fried 棒棒腿 with bone ~110-180 g; 便當 boneless 雞腿排 200-300 g (estimate)"
+   ],
+   "confidence": "low",
+   "method_notes": "Composed per 100 g EDIBLE cooked meat+skin (bone excluded; handle bone loss in default_portion_g). Raw TFDA 棒棒腿(肉雞) I0404302 = 159 kcal (n=2) and 骨腿(肉雞) I0404102 = 196 (n=1); mean 178 (P 15.6, F 12.3). Cooked yield assumed 0.75 (roast/braise water loss): 178/0.75 = ~237, set to 232 so it matches the re-summed macros (P 20.8, F 16.4, C 0.6). Excludes deep-fry oil uptake and breading (oil.yaml adder; breaded leg is higher). Min 185 ~ braised/lean; max 285 ~ crisp skin-on fried. Yield is an assumption."
+  },
+  {
+   "id": "pork_chop",
+   "zh": "排骨",
+   "en": "Pork chop (fried)",
+   "kind": "solid",
+   "bulk": false,
+   "density_g_ml": {
+    "min": 0.75,
+    "typ": 0.9,
+    "max": 1.05
+   },
+   "kcal_100g": {
+    "min": 208.0,
+    "typ": 258.0,
+    "max": 346.0
+   },
+   "macros_100g": {
+    "p": 21.0,
+    "f": 16.0,
+    "c": 12.8
+   },
+   "oil_method": "deep_fry_breaded",
+   "oil_g_per_100g": {
+    "min": 4.0,
+    "max": 16.0
+   },
+   "default_portion_g": {
+    "min": 90,
+    "typ": 140,
+    "max": 230
+   },
+   "container_prior": [
+    "bento_box",
+    "plate_26cm"
+   ],
+   "tfda_refs": [
+    "I0304201",
+    "I0304301",
+    "B0420101"
+   ],
+   "origin": "composed",
+   "source": [
+    "TFDA I0304201",
+    "TFDA I0304301",
+    "TFDA B0420101 (甘藷粉 as coating)",
+    "cook-yield and coating assumptions",
+    "density: No direct FAO row. Meat ~1.05 diluted by porous breaded crust (FAO row 291 'Breadcrumbs' 0.45 bulk) and bone.",
+    "portion: 排骨便當 piece ~100-180 g fried incl. bone (estimate)"
+   ],
+   "confidence": "low",
+   "method_notes": "Composed per 100 g edible fried 排骨 EXCLUDING absorbed frying oil (oil.yaml adder supplies it). cooked pork loin chop (豬大排 I0304201 214 raw /0.78 yield) 85% by weight (274 kcal/100g, range 230-340); coating (starch/flour, TFDA B0420101 甘藷粉 358) 15% by weight (358 kcal/100g, range 330-380). Raw 豬大排 I0304201 = 214 (n=1), 豬小排 I0304301 = 287 (n=3) bracket the cut range (max reflects fattier cuts). Cooking yield 0.78 and coating share 15% are assumptions. For bone-in chops, portions must be on edible weight."
+  },
+  {
+   "id": "braised_egg",
+   "zh": "滷蛋",
+   "en": "Braised egg",
+   "kind": "solid",
+   "bulk": false,
+   "density_g_ml": {
+    "min": 1.0,
+    "typ": 1.04,
+    "max": 1.08
+   },
+   "kcal_100g": {
+    "min": 175,
+    "typ": 191,
+    "max": 202
+   },
+   "macros_100g": {
+    "p": 15.7,
+    "f": 11.4,
+    "c": 6.4
+   },
+   "oil_method": "braise",
+   "oil_g_per_100g": null,
+   "default_portion_g": {
+    "min": 45,
+    "typ": 55,
+    "max": 70
+   },
+   "container_prior": [
+    "bento_box",
+    "bowl_small",
+    "plate_26cm"
+   ],
+   "tfda_refs": [
+    "K0120101",
+    "K0120102",
+    "K0120103"
+   ],
+   "origin": "direct",
+   "source": [
+    "TFDA K0120101 雞滷蛋(市售)",
+    "TFDA K0120102",
+    "TFDA K0120103",
+    "density: Whole egg specific gravity ~1.03-1.09 (general food physics; hard-boiled eggs sink). No citable row fetched.",
+    "density: FAO row 499 'Egg, chicken, boiled/poached' 0.60 is a chopped/bulk figure, NOT applicable to a whole egg: rejected.",
+    "portion: Egg ~55-60 g with shell, 50 g edible; 食物代換表 1 egg = 1 份 (recalled)"
+   ],
+   "confidence": "high",
+   "method_notes": "TFDA K0120101 雞滷蛋(市售) = 191 kcal, n=3, sd 6.41 (sd propagated from macro sds; TFDA gives no sd for energy). 90% interval typ +/-1.645 sd = 180.5-201.5; min lowered to 175 to include home-style K0120102 現煮 (178) and K0120103 隔夜 (182). Whole egg without shell. Direct TFDA match (also K01121 茶葉蛋平均值 = 145 for tea eggs)."
+  },
+  {
+   "id": "fried_egg",
+   "zh": "荷包蛋",
+   "en": "Fried egg",
+   "kind": "solid",
+   "bulk": false,
+   "density_g_ml": {
+    "min": 0.6,
+    "typ": 0.85,
+    "max": 1.0
+   },
+   "kcal_100g": {
+    "min": 154.9,
+    "typ": 162,
+    "max": 169.1
+   },
+   "macros_100g": {
+    "p": 14.0,
+    "f": 11.2,
+    "c": 1.4
+   },
+   "oil_method": "pan_fry",
+   "oil_g_per_100g": {
+    "min": 2.0,
+    "max": 8.0
+   },
+   "default_portion_g": {
+    "min": 40,
+    "typ": 55,
+    "max": 85
+   },
+   "container_prior": [
+    "bento_box",
+    "plate_26cm"
+   ],
+   "tfda_refs": [
+    "K0123101",
+    "K0123201"
+   ],
+   "origin": "direct",
+   "source": [
+    "TFDA K0123101 荷包蛋(不加油)",
+    "TFDA K0123201 (cross-check, with oil)",
+    "density: Reasoned: cooked egg ~1.03 but 荷包蛋 has a puffy oil-crisped lacy white with air pockets.",
+    "portion: 1 egg ~50 g plus pan oil; some vendors fry 2 eggs (max)"
+   ],
+   "confidence": "high",
+   "method_notes": "TFDA K0123101 荷包蛋(不加油) = 162 kcal, n=2, sd 4.33; interval = typ +/-1.645 sd. Deliberately the NO-OIL value: pan oil comes from oil.yaml (pan_fry) to avoid double counting. Reference K0123201 荷包蛋(加油1小匙) = 192 kcal (n=2, sd 11.71), i.e. about +30 kcal from ~1 tsp oil."
+  },
+  {
+   "id": "stirfried_greens",
+   "zh": "炒青菜",
+   "en": "Stir-fried greens",
+   "kind": "solid",
+   "bulk": true,
+   "density_g_ml": {
+    "min": 0.25,
+    "typ": 0.4,
+    "max": 0.6
+   },
+   "kcal_100g": {
+    "min": 16.0,
+    "typ": 24.5,
+    "max": 36.5
+   },
+   "macros_100g": {
+    "p": 1.8,
+    "f": 0.2,
+    "c": 4.7
+   },
+   "oil_method": "stir_fry",
+   "oil_g_per_100g": {
+    "min": 1.5,
+    "max": 6.0
+   },
+   "default_portion_g": {
+    "min": 60,
+    "typ": 110,
+    "max": 220
+   },
+   "container_prior": [
+    "bento_box",
+    "plate_26cm"
+   ],
+   "tfda_refs": [
+    "E30001",
+    "E3201202",
+    "E3201204",
+    "E3201303"
+   ],
+   "origin": "composed",
+   "source": [
+    "TFDA E30001 甘藍平均值",
+    "TFDA E3201202/E3201204/E3201303 青江菜",
+    "wilting-yield assumption 0.75",
+    "density: FAO row 461 'Spinach, leaves, raw' 0.08 (extreme lower bound) and row 460 'Spinach, frozen, cooked' 1.046 (puree/pressed, extreme upper bound)",
+    "density: USDA cooked spinach ~180 g/cup (0.76) and cooked pak choi ~170 g/cup (0.72), drained and pressed into a cup (recalled, unverified); a loose stir-fried pile on a plate is much looser",
+    "portion: 食物代換表 1 份 cooked vegetables ~100 g (recalled); 便當 side ~70-110 g; 小吃 plate 150-250 g"
+   ],
+   "confidence": "med",
+   "method_notes": "Composed from raw leafy vegetables, per 100 g COOKED (wilted) greens, EXCLUDING stir-fry oil (oil.yaml stir_fry supplies it). Components: 甘藍平均值 raw cabbage E30001 (23, n=3 sd 1.2) /0.75 wilt yield 50% by weight (31 kcal/100g, range 20-45); 青江菜 raw bok choy E32012xx (mean ~14, n=1 each) /0.75 wilt yield 50% by weight (18 kcal/100g, range 12-28). Raw values were divided by an assumed 0.75 wilting yield and mixed 50/50. Very low energy, so absolute error is small; real value is dominated by the oil adder."
+  },
+  {
+   "id": "braised_tofu",
+   "zh": "滷豆腐",
+   "en": "Braised tofu",
+   "kind": "solid",
+   "bulk": false,
+   "density_g_ml": {
+    "min": 0.9,
+    "typ": 1.0,
+    "max": 1.08
+   },
+   "kcal_100g": {
+    "min": 80,
+    "typ": 105,
+    "max": 140
+   },
+   "macros_100g": {
+    "p": 9.5,
+    "f": 5.0,
+    "c": 5.5
+   },
+   "oil_method": "braise",
+   "oil_g_per_100g": null,
+   "default_portion_g": {
+    "min": 50,
+    "typ": 90,
+    "max": 170
+   },
+   "container_prior": [
+    "bento_box",
+    "bowl_small",
+    "plate_26cm"
+   ],
+   "tfda_refs": [
+    "R4700901",
+    "R4700902"
+   ],
+   "origin": "composed",
+   "source": [
+    "TFDA R4700901",
+    "TFDA R4700902",
+    "TFDA R4701101 (upper bound reference)",
+    "yield assumption 0.9",
+    "density: Firm tofu ~1.0-1.07 g/mL (USDA firm tofu ~252 g/cup, recalled, unverified). No FAO tofu row found.",
+    "portion: 食物代換表 traditional tofu 1 份 ~80 g, boxed tofu ~1/2 box 140 g (recalled)"
+   ],
+   "confidence": "low",
+   "method_notes": "Composed. TFDA 傳統豆腐 R4700901 = 88 kcal (n=1), R4700902 (2022) = 96 (n=1); mean 92 (P 9.1, F 4.5, C 4.0). Braising loses water (yield assumed ~0.9) and adds soy sauce/sugar, so 92/0.9 = ~102 plus sauce = 105 typ. Max 140 allows for firm 豆乾/油豆腐-style items (TFDA R4701101 小三角油豆腐 = 160) photographed as 滷豆腐. Min 80 ~ soft tofu with little sauce uptake."
+  },
+  {
+   "id": "beef_noodle_soup",
+   "zh": "牛肉麵",
+   "en": "Beef noodle soup (whole bowl)",
+   "kind": "solid",
+   "bulk": false,
+   "density_g_ml": {
+    "min": 0.9,
+    "typ": 1.0,
+    "max": 1.06
+   },
+   "kcal_100g": {
+    "min": 70.8,
+    "typ": 94.4,
+    "max": 125.0
+   },
+   "macros_100g": {
+    "p": 5.6,
+    "f": 1.9,
+    "c": 12.3
+   },
+   "oil_method": "boil",
+   "oil_g_per_100g": null,
+   "default_portion_g": {
+    "min": 550,
+    "typ": 750,
+    "max": 1000
+   },
+   "container_prior": [
+    "bowl_large"
+   ],
+   "tfda_refs": [
+    "R2000901",
+    "I03214",
+    "I0108301"
+   ],
+   "origin": "composed",
+   "source": [
+    "TFDA R2000901",
+    "TFDA I03214 豬骨湯平均值",
+    "TFDA I0108301",
+    "composition assumptions",
+    "density: FAO row 567 'Soup, meat' 1.04 (KEN); row 564 'Chicken noodle soup' 1.00 (S&W); row 574 'Beef and noodles in gravy (mixture)' 1.038 (S&W)",
+    "density: FAO row 357 'Pasta/ noodles, boiled' 0.59 (KEN): noodle-heavy low-broth bowl pulls density down",
+    "portion: Whole bowl incl. broth: small ~500-600 g, regular ~750-900 g, large up to ~1000 g (estimate)"
+   ],
+   "confidence": "low",
+   "method_notes": "Composed WHOLE BOWL (noodles+broth+beef) per 100 g of the entire bowl. cooked wheat noodles (拉麵 濕麵條 R2000901 292 raw /2.0 cooking water uptake) 38% by weight (146 kcal/100g, range 120-175); broth with oil layer (豬骨湯 ~8 kcal + beef fat/oil/soy sauce, assumed) 50% by weight (25 kcal/100g, range 12-45); braised beef (牛後腿腱子心 I0108301 139 raw /0.7 yield, with allowance for fattier 牛腩) 12% by weight (220 kcal/100g, range 160-300). Typical bowl ~650-700 g; fractions are assumptions (the broth share and broth oil are the main uncertainty). TFDA has no cooked-noodle row: 拉麵 R2000901 is a raw wet noodle (292); the cooking uptake factor 2.0 is an assumption. Result ~90 kcal/100 g = ~600-650 kcal per bowl, consistent with commonly cited 600-700 kcal bowls. Min/max combine component ranges with fully correlated weights."
+  },
+  {
+   "id": "boiled_dumplings",
+   "zh": "水餃",
+   "en": "Boiled dumplings",
+   "kind": "solid",
+   "bulk": true,
+   "density_g_ml": {
+    "min": 0.5,
+    "typ": 0.65,
+    "max": 0.8
+   },
+   "kcal_100g": {
+    "min": 184.4,
+    "typ": 217.0,
+    "max": 249.5
+   },
+   "macros_100g": {
+    "p": 7.5,
+    "f": 10.1,
+    "c": 24.3
+   },
+   "oil_method": "boil",
+   "oil_g_per_100g": null,
+   "default_portion_g": {
+    "min": 150,
+    "typ": 250,
+    "max": 400
+   },
+   "container_prior": [
+    "plate_26cm",
+    "bowl_small"
+   ],
+   "tfda_refs": [
+    "R2200801",
+    "R2201501"
+   ],
+   "origin": "direct",
+   "source": [
+    "TFDA R2200801",
+    "TFDA R2201501",
+    "TFDA R2200201 (cross-check)",
+    "density: Single dumpling (dough+filling) ~1.05-1.10 (reasoned); pile packing fraction ~0.6-0.7 gives bulk ~0.65.",
+    "density: FAO row 579 'Chicken and dumplings (mixture)' 1.038 is a stew, not a pile: rejected.",
+    "portion: ~10 pieces at ~22-28 g each; shops sell 8-15 pieces (estimate)"
+   ],
+   "confidence": "med",
+   "method_notes": "TFDA prepared (already cooked) dumplings: R2200801 冷凍豬肉熟水餃 = 235 kcal and R2201501 熟水餃(高麗菜水餃) = 199, both n=1. typ = mean 217; n=1 so +/-15% rule. Macros are the mean of both rows (P 7.2/7.4, F 10.1/10.1, C 28.9/19.7). Raw frozen pork dumplings (R2200201 = 208, n=2) are consistent. Real filling (cabbage vs chive vs pork fat) moves this by +/-15% or more. Boiled: oil adder ~0."
+  },
+  {
+   "id": "potstickers",
+   "zh": "鍋貼",
+   "en": "Potstickers",
+   "kind": "solid",
+   "bulk": true,
+   "density_g_ml": {
+    "min": 0.45,
+    "typ": 0.6,
+    "max": 0.8
+   },
+   "kcal_100g": {
+    "min": 202.3,
+    "typ": 238,
+    "max": 273.7
+   },
+   "macros_100g": {
+    "p": 7.8,
+    "f": 11.3,
+    "c": 26.2
+   },
+   "oil_method": "pan_fry",
+   "oil_g_per_100g": {
+    "min": 2.0,
+    "max": 8.0
+   },
+   "default_portion_g": {
+    "min": 150,
+    "typ": 250,
+    "max": 400
+   },
+   "container_prior": [
+    "plate_26cm"
+   ],
+   "tfda_refs": [
+    "R2201401"
+   ],
+   "origin": "direct",
+   "source": [
+    "TFDA R2201401 豬肉鍋貼",
+    "density: As boiled_dumplings; pan-fried flatter pieces in rows pack less than a heap.",
+    "portion: ~8-10 pieces at ~25-30 g; sold per piece or per 10 (estimate)"
+   ],
+   "confidence": "med",
+   "method_notes": "TFDA R2201401 豬肉鍋貼 = 238 kcal, n=1 (sd 18.9 reported but n=1, so the +/-15% rule is used). Cooked state/pan oil is not documented in TFDA; treated as BASE without added pan oil, and oil.yaml pan_fry supplies the shop oil (shop potstickers are usually fried in more oil than home)."
+  },
+  {
+   "id": "scallion_pancake",
+   "zh": "蔥油餅",
+   "en": "Scallion pancake",
+   "kind": "solid",
+   "bulk": false,
+   "density_g_ml": {
+    "min": 0.45,
+    "typ": 0.62,
+    "max": 0.8
+   },
+   "kcal_100g": {
+    "min": 259.2,
+    "typ": 305,
+    "max": 350.8
+   },
+   "macros_100g": {
+    "p": 8.3,
+    "f": 9.3,
+    "c": 46.9
+   },
+   "oil_method": "pan_fry",
+   "oil_g_per_100g": {
+    "min": 2.0,
+    "max": 8.0
+   },
+   "default_portion_g": {
+    "min": 80,
+    "typ": 130,
+    "max": 210
+   },
+   "container_prior": [
+    "plate_26cm"
+   ],
+   "tfda_refs": [
+    "R2700101",
+    "R2700201"
+   ],
+   "origin": "direct",
+   "source": [
+    "TFDA R2700101 蔥油餅",
+    "TFDA R2700201 冷凍蔥油餅 (cross-check)",
+    "density: FAO row 289 'Bread, white' 0.42 (KEN) is the fluffy lower bound; laminated pan-fried dough is denser (solid dough ~1.1).",
+    "portion: Street 1 piece ~100-150 g; egg-added or large ~180-200 g (estimate)"
+   ],
+   "confidence": "med",
+   "method_notes": "TFDA R2700101 蔥油餅 = 305 kcal, n=1 (+/-15% rule). Frozen raw 冷凍蔥油餅 R2700201 = 258 (n=2, sd 31.5) is a lower cross-check for the uncooked disc; the 305 row is treated as ready-to-eat. Street/shop pancakes are griddled in extra oil: the oil.yaml pan_fry adder (wide) handles that and is the dominant uncertainty."
+  },
+  {
+   "id": "fried_chicken_cutlet",
+   "zh": "雞排",
+   "en": "Fried chicken cutlet",
+   "kind": "solid",
+   "bulk": false,
+   "density_g_ml": {
+    "min": 0.65,
+    "typ": 0.85,
+    "max": 1.0
+   },
+   "kcal_100g": {
+    "min": 197.6,
+    "typ": 253.2,
+    "max": 308.8
+   },
+   "macros_100g": {
+    "p": 17.5,
+    "f": 12.4,
+    "c": 16.0
+   },
+   "oil_method": "deep_fry_breaded",
+   "oil_g_per_100g": {
+    "min": 4.0,
+    "max": 16.0
+   },
+   "default_portion_g": {
+    "min": 180,
+    "typ": 250,
+    "max": 350
+   },
+   "container_prior": [
+    "plate_26cm"
+   ],
+   "tfda_refs": [
+    "I04044",
+    "I0404402",
+    "I0404403",
+    "B0420101",
+    "P1500201"
+   ],
+   "origin": "composed",
+   "source": [
+    "TFDA I04044 雞排平均值",
+    "TFDA I0404402",
+    "TFDA I0404403",
+    "TFDA B0420101",
+    "TFDA P1500201",
+    "assumptions: yield 0.80, coating 20%",
+    "density: Reasoned: boneless flattened breast ~1.05 with thick porous coating (FAO row 291 'Breadcrumbs' 0.45 bulk).",
+    "portion: 1 雞排 ~200-300 g as stated by project owner; large-size stalls to ~350 g"
+   ],
+   "confidence": "low",
+   "method_notes": "Composed per 100 g of fried cutlet EXCLUDING absorbed frying oil (oil.yaml deep_fry_breaded; PLAN cites ~15% fat uptake). cooked chicken meat (雞排 raw 183 [I04044 avg, n=2 sd 47] /0.80 yield) 80% by weight (229 kcal/100g, range 172-286); coating (地瓜粉/炸雞粉; TFDA B0420101 甘藷粉 358, P1500201 炸雞粉 333) 20% by weight (350 kcal/100g, range 300-400). TFDA raw 雞排 rows span 158-251 (avg I04044 = 183, sd 47, n=2): very variable (breast vs thigh, skin), so the meat range is widened to +/-25% around 229 rather than using the huge sd. Cook yield 0.80 and 20% coating are assumptions."
+  },
+  {
+   "id": "popcorn_chicken",
+   "zh": "鹽酥雞",
+   "en": "Taiwanese popcorn chicken",
+   "kind": "solid",
+   "bulk": true,
+   "density_g_ml": {
+    "min": 0.35,
+    "typ": 0.5,
+    "max": 0.65
+   },
+   "kcal_100g": {
+    "min": 204.0,
+    "typ": 259.2,
+    "max": 314.5
+   },
+   "macros_100g": {
+    "p": 16.5,
+    "f": 11.7,
+    "c": 20.0
+   },
+   "oil_method": "deep_fry_breaded",
+   "oil_g_per_100g": {
+    "min": 4.0,
+    "max": 16.0
+   },
+   "default_portion_g": {
+    "min": 80,
+    "typ": 150,
+    "max": 300
+   },
+   "container_prior": [
+    "plate_26cm"
+   ],
+   "tfda_refs": [
+    "I04044",
+    "B0420101",
+    "P1500201"
+   ],
+   "origin": "composed",
+   "source": [
+    "TFDA I04044",
+    "TFDA B0420101",
+    "TFDA P1500201",
+    "assumptions: yield 0.80, coating 25%",
+    "density: Reasoned: individual piece ~0.9-1.0; random loose pile in a paper bag packs ~0.5-0.6.",
+    "density: No FAO fried-chicken row; no USDA cup weight retrieved.",
+    "portion: Bag sizes 小 ~100 g to 大 ~250+ g typical (estimate, vendor-dependent)"
+   ],
+   "confidence": "low",
+   "method_notes": "Composed like 雞排 but with a larger coating share (25%; small pieces have more surface) per 100 g EXCLUDING frying oil (oil.yaml deep_fry_breaded; small pieces absorb a lot, set there). cooked chicken meat (I04044 raw 183 /0.80 yield) 75% by weight (229 kcal/100g, range 172-286); coating (地瓜粉 etc., B0420101 / P1500201) 25% by weight (350 kcal/100g, range 300-400). No TFDA row for the dish itself. Real 鹽酥雞 plates also include fried sides (vegetables, tofu, sweet potato) that this class does not cover."
+  },
+  {
+   "id": "bubble_milk_tea",
+   "zh": "珍珠奶茶",
+   "en": "Bubble milk tea",
+   "kind": "drink",
+   "density_g_ml": null,
+   "kcal_100g": {
+    "min": 70.7,
+    "typ": 84,
+    "max": 97.3
+   },
+   "macros_100g": {
+    "p": 0.2,
+    "f": 2.7,
+    "c": 14.5
+   },
+   "oil_g_per_100g": null,
+   "default_portion_g": {
+    "min": 450,
+    "typ": 650,
+    "max": 750
+   },
+   "container_prior": [
+    "cup_700",
+    "cup_500"
+   ],
+   "tfda_refs": [
+    "O0702101",
+    "O0702001",
+    "O0702201"
+   ],
+   "origin": "direct",
+   "source": [
+    "TFDA O0702101",
+    "TFDA O0702001",
+    "TFDA O0702201",
+    "portion: 大杯 700 mL / 中杯 500 mL; liquid ~ mL x 1.0 g/mL; ice displaces part. MOHW table uses 700 mL"
+   ],
+   "confidence": "med",
+   "method_notes": "INDICATIVE ONLY: drink kcal in the app is computed from drinks.yaml (sugar_g*4 + base + toppings), not from this value. TFDA O0702101 珍珠奶茶(去冰,半糖) 700 mL cup = 84 kcal/100 g (n=4, sd 8.11); interval typ +/-1.645 sd = 70.7-97.3, which also spans 微糖 O0702001 (75) and 全糖 O0702201 (94). Sample prep note: blended, then the clear supernatant was analysed, so pearl content may be partly under-represented. 84 kcal/100 g x ~700 g = ~590 kcal.",
+   "kcal_note": "indicative only; use top-level drinks for drink kcal"
+  }
+ ],
+ "containers": {
+  "bowl_small": {
+   "shape": "bowl",
+   "zh": "飯碗 (4.5 吋)",
+   "capacity_ml": {
+    "min": 250,
+    "typ": 320,
+    "max": 420
+   },
+   "rim_diameter_cm": {
+    "min": 10.5,
+    "typ": 11.5,
+    "max": 12.5
+   },
+   "depth_cm": {
+    "min": 5.0,
+    "typ": 6.0,
+    "max": 7.0
+   },
+   "source": [
+    "Typical Taiwanese 飯碗 / 4.5 inch rice bowl (general knowledge, unverified)"
+   ],
+   "confidence": "low"
+  },
+  "bowl_large": {
+   "shape": "bowl",
+   "zh": "麵碗 / 湯碗 (6-7 吋)",
+   "capacity_ml": {
+    "min": 650,
+    "typ": 900,
+    "max": 1200
+   },
+   "rim_diameter_cm": {
+    "min": 16.0,
+    "typ": 18.0,
+    "max": 20.0
+   },
+   "depth_cm": {
+    "min": 6.5,
+    "typ": 8.0,
+    "max": 9.5
+   },
+   "source": [
+    "Typical noodle bowl 6-7 inch; beef noodle shops use ~18-20 cm rim (general knowledge, unverified)"
+   ],
+   "confidence": "low"
+  },
+  "bento_box": {
+   "shape": "box",
+   "zh": "便當盒 (紙/塑膠 三格)",
+   "capacity_ml": {
+    "min": 800,
+    "typ": 1000,
+    "max": 1300
+   },
+   "rim_diameter_cm": {
+    "min": 17.0,
+    "typ": 19.5,
+    "max": 22.0
+   },
+   "length_cm": {
+    "min": 19.0,
+    "typ": 21.0,
+    "max": 24.0
+   },
+   "width_cm": {
+    "min": 13.5,
+    "typ": 16.0,
+    "max": 19.0
+   },
+   "depth_cm": {
+    "min": 3.5,
+    "typ": 4.5,
+    "max": 5.5
+   },
+   "source": [
+    "Standard disposable 便當盒 ~21 x 16 x 4.5 cm, ~1000 mL class (general knowledge, unverified)"
+   ],
+   "confidence": "low"
+  },
+  "plate_26cm": {
+   "shape": "plate",
+   "zh": "26 公分盤",
+   "capacity_ml": {
+    "min": 200,
+    "typ": 400,
+    "max": 700
+   },
+   "rim_diameter_cm": {
+    "min": 25.0,
+    "typ": 26.0,
+    "max": 27.0
+   },
+   "depth_cm": {
+    "min": 2.0,
+    "typ": 2.5,
+    "max": 3.5
+   },
+   "source": [
+    "Nominal 26 cm dinner plate; capacity = typical heaped load (judgement)"
+   ],
+   "confidence": "low"
+  },
+  "cup_500": {
+   "shape": "cup",
+   "zh": "中杯 500 mL 手搖杯",
+   "capacity_ml": {
+    "min": 480,
+    "typ": 500,
+    "max": 560
+   },
+   "rim_diameter_cm": {
+    "min": 8.8,
+    "typ": 9.0,
+    "max": 9.5
+   },
+   "depth_cm": {
+    "min": 11.5,
+    "typ": 12.5,
+    "max": 13.5
+   },
+   "source": [
+    "Drink-shop cups use a 90 mm rim standard; 500 cc height ~12-13 cm (general knowledge, unverified)"
+   ],
+   "confidence": "low"
+  },
+  "cup_700": {
+   "shape": "cup",
+   "zh": "大杯 700 mL 手搖杯",
+   "capacity_ml": {
+    "min": 660,
+    "typ": 700,
+    "max": 780
+   },
+   "rim_diameter_cm": {
+    "min": 8.8,
+    "typ": 9.0,
+    "max": 9.5
+   },
+   "depth_cm": {
+    "min": 15.5,
+    "typ": 16.5,
+    "max": 17.5
+   },
+   "source": [
+    "90 mm rim standard; 700 cc height ~16-17 cm (general knowledge, unverified). 50嵐 large cup is stated ~720 mL by secondary source (cw.com.tw/article/5127474)."
+   ],
+   "confidence": "low"
+  }
+ },
+ "drinks": {
+  "version": 1,
+  "mohw_table_700ml": {
+   "source": "MOHW 附件4 p.5 of priors_mohw_sugar.pdf",
+   "bubble_milk_tea": {
+    "full": {
+     "sugar_g": 61.6,
+     "kcal": 658
+    },
+    "half": {
+     "sugar_g": 44.8,
+     "kcal": 588
+    },
+    "light": {
+     "sugar_g": 39.2,
+     "kcal": 525
+    }
+   },
+   "oolong_tea": {
+    "full": {
+     "sugar_g": 57.4,
+     "kcal": 252
+    },
+    "half": {
+     "sugar_g": 34.3,
+     "kcal": 147
+    },
+    "light": {
+     "sugar_g": 25.2,
+     "kcal": 112
+    }
+   },
+   "green_tea_yakult": {
+    "full": {
+     "sugar_g": 71.4,
+     "kcal": 343
+    }
+   },
+   "verified": "61.6 / 44.8 / 39.2 g CONFIRMED for 珍珠奶茶 全糖/半糖/微糖.",
+   "derived": "kcal minus 4*sugar_g = 411.6 (full), 408.8 (half), 368.2 (light): the non-sugar part (tea, milk/creamer, pearls) is ~370-410 kcal."
+  },
+  "full_sugar_g_per_700ml": {
+   "min": 50.0,
+   "typ": 61.6,
+   "max": 75.0
+  },
+  "sugar_levels": {
+   "full": 1.0,
+   "less": 0.84,
+   "half": 0.727,
+   "light": 0.636,
+   "none": 0.455
+  },
+  "sugar_levels_range": {
+   "less": {
+    "min": 0.75,
+    "typ": 0.84,
+    "max": 0.95
+   },
+   "half": {
+    "min": 0.6,
+    "typ": 0.727,
+    "max": 0.95
+   },
+   "light": {
+    "min": 0.45,
+    "typ": 0.636,
+    "max": 0.8
+   },
+   "none": {
+    "min": 0.2,
+    "typ": 0.455,
+    "max": 0.55
+   }
+  },
+  "sugar_levels_note": "董氏基金會 (John Tung Foundation) repeatedly found that stated 半糖 drinks are often much sweeter: one report (PTS news,\nhttps://news.pts.org.tw/article/238135, year not confirmed) says over 60% of drinks claiming 半糖 were actually 7-8 分糖 and\n16% of 232 sampled 半糖 teas had the same kcal as 全糖; another (UDN, https://health.udn.com/health/story/6037/2676720) quotes\nthe foundation director saying shops' 半糖 and 全糖 taste \"about as sweet\". Hence half's max is widened to 0.95 and the\nMOHW 0.727 (itself a \"7.3 分\") is used as typ rather than 0.5. Since 2021-01-01 TFDA requires chain shops to label total sugar and kcal\n(Taiwan News, https://www.taiwannews.com.tw/zh/news/4023689); use those labels when available.\n",
+  "drinks": {
+   "bubble_milk_tea": {
+    "zh": "珍珠奶茶",
+    "base_kcal_per_700ml": {
+     "min": 240,
+     "typ": 285,
+     "max": 340
+    },
+    "toppings_kcal": {
+     "min": 60,
+     "typ": 120,
+     "max": 190
+    },
+    "source": [
+     "Sum constrained by MOHW page 5 (see mohw_table_700ml): 658/588/525 kcal minus 4 kcal/g of listed sugar.",
+     "Split: judgement. No chain-shop table was fetched; 50嵐 large cup secondary figures 668-783 kcal full-sugar (cw.com.tw/article/5127474, TVBS supertaste 345348) are HIGHER than MOHW's 658, so max is allowed up to the 783 case.",
+     "Label gap: shop labels often exclude toppings; 董氏基金會 2019 found label vs actual kcal differences up to ~7x with toppings (PTS news 433548)."
+    ],
+    "confidence": "low",
+    "note": "kcal for 全糖 at typ: 61.6*4 + 285 + 120 = 651 (MOHW 658). Hi case (75 g, 340, 190) = 830 kcal covers the 783 chain figure.",
+    "size_scaling": "Scale all terms by size_ml/700. A 700 mL cup contains ice; the MOHW per-700 mL basis is assumed to be drink volume incl. ice. Unverified."
+   }
+  }
+ }
+}

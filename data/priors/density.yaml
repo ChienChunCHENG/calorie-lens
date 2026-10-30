@@ -1,0 +1,119 @@
+# Density priors for the 14 solid class ids (bubble_milk_tea is a drink: no density, uses drinks.yaml).
+# density_g_ml is what the range engine multiplies a VOLUME by to get mass.
+#   bulk:false -> solid-ish mass (rice packed in a bowl, a soup bowl, one egg)
+#   bulk:true  -> loose pile with air gaps; value is BULK density (g per mL of pile envelope), ranges wide.
+# {min,typ,max} is a 90% interval (contract). Confidence is per entry.
+# FAO = FAO/INFOODS Density DB v2.0, data/sources/priors_fao_density.xlsx, sheet "Density DB", 1-based Excel row.
+# USDA cup weights could NOT be re-pulled via API (DEMO_KEY returned HTTP 429 after ~8 calls). Any "USDA" figure below is
+# recalled from SR Legacy memory and marked "(recalled, unverified)".
+# IMPORTANT: for chicken_leg / pork_chop the volume includes the bone. kcal_100g in dishes.yaml must be per 100 g of the
+# WHOLE piece as served (edible fraction folded in), or mass must be converted to edible mass.
+version: 1
+units: g/mL
+solids:
+  rice_white:
+    density_g_ml: {min: 0.60, typ: 0.70, max: 0.80}
+    bulk: false
+    source:
+      - "FAO row 371 'Rice, white, boiled' 0.73 g/mL (RC own measurements)"
+      - "FAO row 364 'Rice, boiled' 0.73 (KEN); row 642 'Rice, plain (rice + water)' 0.70 (KEN)"
+      - "USDA FDC 168878 long-grain white cooked ~158 g/cup / 236.6 = 0.67 (recalled, unverified)"
+    note: "Taiwanese ponlai/japonica rice is stickier and packs slightly denser than long-grain; min/max cover loose vs pressed bowl."
+    confidence: high
+  lu_rou_fan:
+    density_g_ml: {min: 0.65, typ: 0.78, max: 0.95}
+    bulk: false
+    source:
+      - "Closest analogue: FAO row 636 'Rice + meat' 0.73 (KEN) and row 637 'Rice + meat + vegetable' 0.83 (KEN)"
+    note: "Analogue, not a match. Rice with braised-pork sauce and topping; sauce fills voids so slightly denser than plain rice."
+    confidence: low
+  chicken_leg:
+    density_g_ml: {min: 0.80, typ: 0.95, max: 1.05}
+    bulk: false
+    source:
+      - "No FAO fried-chicken row. Physical estimate: muscle ~1.05, bone ~1.8, porous crust/skin gaps lower it."
+      - "FAO 'Pork, with bone, boiled' 0.63-0.70 (KEN) are bulk pile densities: rejected as wrong basis."
+    note: "Whole drumstick incl. bone, fried or braised. Reasoned estimate, no measured source."
+    confidence: low
+  pork_chop:
+    density_g_ml: {min: 0.75, typ: 0.90, max: 1.05}
+    bulk: false
+    source:
+      - "No direct FAO row. Meat ~1.05 diluted by porous breaded crust (FAO row 291 'Breadcrumbs' 0.45 bulk) and bone."
+    note: "Fried 排骨 (bone-in or thin boneless cutlet). Reasoned estimate."
+    confidence: low
+  braised_egg:
+    density_g_ml: {min: 1.00, typ: 1.04, max: 1.08}
+    bulk: false
+    source:
+      - "Whole egg specific gravity ~1.03-1.09 (general food physics; hard-boiled eggs sink). No citable row fetched."
+      - "FAO row 499 'Egg, chicken, boiled/poached' 0.60 is a chopped/bulk figure, NOT applicable to a whole egg: rejected."
+    note: "Whole peeled egg, tea/soy-braised."
+    confidence: med
+  fried_egg:
+    density_g_ml: {min: 0.60, typ: 0.85, max: 1.00}
+    bulk: false
+    source:
+      - "Reasoned: cooked egg ~1.03 but 荷包蛋 has a puffy oil-crisped lacy white with air pockets."
+    note: "Weak; flat object so volume error dominates anyway."
+    confidence: low
+  stirfried_greens:
+    density_g_ml: {min: 0.25, typ: 0.40, max: 0.60}
+    bulk: true
+    source:
+      - "FAO row 461 'Spinach, leaves, raw' 0.08 (extreme lower bound) and row 460 'Spinach, frozen, cooked' 1.046 (puree/pressed, extreme upper bound)"
+      - "USDA cooked spinach ~180 g/cup (0.76) and cooked pak choi ~170 g/cup (0.72), drained and pressed into a cup (recalled, unverified); a loose stir-fried pile on a plate is much looser"
+    note: "Loose wet pile. Typ is a judgement between loose and pressed."
+    confidence: low
+  braised_tofu:
+    density_g_ml: {min: 0.90, typ: 1.00, max: 1.08}
+    bulk: false
+    source:
+      - "Firm tofu ~1.0-1.07 g/mL (USDA firm tofu ~252 g/cup, recalled, unverified). No FAO tofu row found."
+    note: "Cubes/slices treated as solid mass. If shown as a loose pile of small cubes use bulk ~0.7."
+    confidence: med
+  beef_noodle_soup:
+    density_g_ml: {min: 0.90, typ: 1.00, max: 1.06}
+    bulk: false
+    source:
+      - "FAO row 567 'Soup, meat' 1.04 (KEN); row 564 'Chicken noodle soup' 1.00 (S&W); row 574 'Beef and noodles in gravy (mixture)' 1.038 (S&W)"
+      - "FAO row 357 'Pasta/ noodles, boiled' 0.59 (KEN): noodle-heavy low-broth bowl pulls density down"
+    note: "WHOLE BOWL including broth; volume = filled bowl cavity. kcal_100g in dishes.yaml must be a whole-bowl average (noodles+beef+broth)."
+    confidence: med
+  boiled_dumplings:
+    density_g_ml: {min: 0.50, typ: 0.65, max: 0.80}
+    bulk: true
+    source:
+      - "Single dumpling (dough+filling) ~1.05-1.10 (reasoned); pile packing fraction ~0.6-0.7 gives bulk ~0.65."
+      - "FAO row 579 'Chicken and dumplings (mixture)' 1.038 is a stew, not a pile: rejected."
+    note: "Pile of whole pieces on plate/bowl. Reasoned estimate, no measured source."
+    confidence: low
+  potstickers:
+    density_g_ml: {min: 0.45, typ: 0.60, max: 0.80}
+    bulk: true
+    source:
+      - "As boiled_dumplings; pan-fried flatter pieces in rows pack less than a heap."
+    note: "Reasoned. If laid in a single row the pile model overestimates volume (single-layer prior ~0.9)."
+    confidence: low
+  scallion_pancake:
+    density_g_ml: {min: 0.45, typ: 0.62, max: 0.80}
+    bulk: false
+    source:
+      - "FAO row 289 'Bread, white' 0.42 (KEN) is the fluffy lower bound; laminated pan-fried dough is denser (solid dough ~1.1)."
+    note: "Estimate between bread and solid dough."
+    confidence: low
+  fried_chicken_cutlet:
+    density_g_ml: {min: 0.65, typ: 0.85, max: 1.00}
+    bulk: false
+    source:
+      - "Reasoned: boneless flattened breast ~1.05 with thick porous coating (FAO row 291 'Breadcrumbs' 0.45 bulk)."
+    note: "Large flat, mostly boneless."
+    confidence: low
+  popcorn_chicken:
+    density_g_ml: {min: 0.35, typ: 0.50, max: 0.65}
+    bulk: true
+    source:
+      - "Reasoned: individual piece ~0.9-1.0; random loose pile in a paper bag packs ~0.5-0.6."
+      - "No FAO fried-chicken row; no USDA cup weight retrieved."
+    note: "Loose pile in bag/tray; very wide."
+    confidence: low

@@ -1,0 +1,58 @@
+# Container geometry priors. NONE of these were verified against a downloaded spec sheet; they are typical retail dimensions from
+# general knowledge of Taiwanese tableware / takeaway packaging. Measure real items in M5 and tighten.
+# rim_diameter_cm and depth_cm are also {min,typ,max} triples (contract left the format open). For box/plate, rim_diameter_cm is the
+# equivalent-circle diameter of the top opening (box: 2*sqrt(L*W/pi)); L/W are given separately.
+# capacity_ml = brim capacity of the cavity (bowls, box, cups). For plate_26cm it is the heaped-food volume the plate normally carries
+# (a plate has no brim capacity).
+version: 1
+containers:
+  bowl_small:
+    shape: bowl
+    zh: "飯碗 (4.5 吋)"
+    capacity_ml: {min: 250, typ: 320, max: 420}
+    rim_diameter_cm: {min: 10.5, typ: 11.5, max: 12.5}
+    depth_cm: {min: 5.0, typ: 6.0, max: 7.0}
+    source: ["Typical Taiwanese 飯碗 / 4.5 inch rice bowl (general knowledge, unverified)"]
+    confidence: low
+  bowl_large:
+    shape: bowl
+    zh: "麵碗 / 湯碗 (6-7 吋)"
+    capacity_ml: {min: 650, typ: 900, max: 1200}
+    rim_diameter_cm: {min: 16.0, typ: 18.0, max: 20.0}
+    depth_cm: {min: 6.5, typ: 8.0, max: 9.5}
+    source: ["Typical noodle bowl 6-7 inch; beef noodle shops use ~18-20 cm rim (general knowledge, unverified)"]
+    confidence: low
+  bento_box:
+    shape: box
+    zh: "便當盒 (紙/塑膠 三格)"
+    capacity_ml: {min: 800, typ: 1000, max: 1300}
+    rim_diameter_cm: {min: 17.0, typ: 19.5, max: 22.0}
+    length_cm: {min: 19.0, typ: 21.0, max: 24.0}
+    width_cm: {min: 13.5, typ: 16.0, max: 19.0}
+    depth_cm: {min: 3.5, typ: 4.5, max: 5.5}
+    source: ["Standard disposable 便當盒 ~21 x 16 x 4.5 cm, ~1000 mL class (general knowledge, unverified)"]
+    confidence: low
+  plate_26cm:
+    shape: plate
+    zh: "26 公分盤"
+    capacity_ml: {min: 200, typ: 400, max: 700}
+    rim_diameter_cm: {min: 25.0, typ: 26.0, max: 27.0}
+    depth_cm: {min: 2.0, typ: 2.5, max: 3.5}
+    source: ["Nominal 26 cm dinner plate; capacity = typical heaped load (judgement)"]
+    confidence: low
+  cup_500:
+    shape: cup
+    zh: "中杯 500 mL 手搖杯"
+    capacity_ml: {min: 480, typ: 500, max: 560}
+    rim_diameter_cm: {min: 8.8, typ: 9.0, max: 9.5}
+    depth_cm: {min: 11.5, typ: 12.5, max: 13.5}
+    source: ["Drink-shop cups use a 90 mm rim standard; 500 cc height ~12-13 cm (general knowledge, unverified)"]
+    confidence: low
+  cup_700:
+    shape: cup
+    zh: "大杯 700 mL 手搖杯"
+    capacity_ml: {min: 660, typ: 700, max: 780}
+    rim_diameter_cm: {min: 8.8, typ: 9.0, max: 9.5}
+    depth_cm: {min: 15.5, typ: 16.5, max: 17.5}
+    source: ["90 mm rim standard; 700 cc height ~16-17 cm (general knowledge, unverified). 50嵐 large cup is stated ~720 mL by secondary source (cw.com.tw/article/5127474)."]
+    confidence: low

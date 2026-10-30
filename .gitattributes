@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.onnx binary
+*.zip binary
+*.pdf binary
+*.xlsx binary

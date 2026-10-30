@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Calorie Lens</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;color:#fff;font:14px -apple-system,system-ui,sans-serif;overflow:hidden}
+  #stage{position:fixed;inset:0}
+  video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+  canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  #hud{position:absolute;top:env(safe-area-inset-top,0);left:0;right:0;padding:6px 10px;font:11px ui-monospace,Menlo,monospace;background:rgba(0,0,0,.45);white-space:pre-wrap}
+  #ctl{position:absolute;bottom:env(safe-area-inset-bottom,0);left:0;right:0;padding:12px;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap}
+  button,select{font:inherit;padding:10px 16px;border-radius:10px;border:0;background:#2ecc71;color:#000;font-weight:600}
+  select{background:#fff}
+  #msg{position:absolute;left:12px;right:12px;top:50%;transform:translateY(-50%);text-align:center;font-size:16px;color:#ffd166}
+</style>
+</head>
+<body>
+<div id="stage">
+  <video id="video" playsinline muted autoplay></video>
+  <canvas id="overlay"></canvas>
+  <div id="hud">HUD</div>
+  <div id="msg"></div>
+  <div id="ctl">
+    <button id="start">Start camera</button>
+    <select id="backend"><option value="webgpu">webgpu (fallback wasm)</option><option value="wasm">wasm</option></select>
+  </div>
+</div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>

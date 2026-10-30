@@ -1,0 +1,510 @@
+# Generated from the TFDA pivot plus composition assumptions. See data/README.md.
+schema_note: kcal_100g is per 100 g of the dish as served (cooked, edible portion) and EXCLUDES cooking-oil uptake for fried/stir-fried dishes
+  (oil.yaml adder supplies it). min/typ/max = 90% interval.
+dishes:
+  rice_white:
+    zh: 白飯
+    en: Steamed white rice
+    kind: solid
+    origin: direct
+    kcal_100g:
+      min: 140
+      typ: 183
+      max: 200
+    macros_100g:
+      p: 3.1
+      f: 0.3
+      c: 41.0
+    tfda_refs:
+    - A0550601
+    method_notes: 'COOKED rice (not raw). TFDA A0550601: rice cooked in a rice cooker with 1.1x water, n=1, so no sd. typ = TFDA value 183. Max
+      = typ +9%. Min deliberately lowered to 140 (below the generic -15% = 155): shops usually cook with 1.2-1.3x water and the 食物代換表 gives about
+      70 kcal per 1/4 bowl (~50 g) of cooked rice = ~140 kcal/100 g. TFDA R1100101 免煮飯 (retort rice pack) = 168 is a second reference. Typ may
+      run high for shop rice.'
+    source:
+    - TFDA A0550601 白飯
+    - TFDA R1100101 免煮飯 (cross-check)
+    - 衛福部/國健署 食物代換表 (recalled from memory, about 70 kcal per 50 g cooked rice; verify)
+    confidence: med
+  lu_rou_fan:
+    zh: 滷肉飯
+    en: Braised pork rice
+    kind: solid
+    origin: composed
+    kcal_100g:
+      min: 172.0
+      typ: 225.8
+      max: 250.0
+    macros_100g:
+      p: 4.4
+      f: 7.9
+      c: 33.6
+    tfda_refs:
+    - A0550601
+    - P1000301
+    method_notes: Composed, 1 item (do not segment). 白飯 cooked rice (A0550601) 80% by weight (183 kcal/100g, range 140-200); 肉燥/滷肉 incl. sauce
+      (P1000301 肉燥) 20% by weight (397 kcal/100g, range 300-450). Weight fractions are an assumption (about 200 g rice + 50 g braised pork with
+      sauce for a small bowl); TFDA P1000301 肉燥 is a single n=1 sample of a packaged minced-pork topping and is only a proxy for shop 滷肉 (belly
+      pork + skin; fattier shops higher). Min/max = component ranges combined with fully correlated weights (conservative). Braised, so any added-oil
+      adder should be ~0.
+    source:
+    - TFDA A0550601
+    - TFDA P1000301
+    - composition assumption
+    confidence: low
+    components:
+    - name: 白飯 cooked rice (A0550601)
+      frac: 0.8
+      kcal: 183
+      kmin: 140
+      kmax: 200
+      p: 3.1
+      f: 0.3
+      c: 41.0
+      ref: A0550601
+    - name: 肉燥/滷肉 incl. sauce (P1000301 肉燥)
+      frac: 0.2
+      kcal: 397
+      kmin: 300
+      kmax: 450
+      p: 9.5
+      f: 38.1
+      c: 4.2
+      ref: P1000301
+  chicken_leg:
+    zh: 雞腿
+    en: Chicken drumstick (fried or braised)
+    kind: solid
+    origin: composed
+    kcal_100g:  # AS-SERVED incl. bone = edible 185/232/285 x edible fraction 0.70/0.80/1.00 (QC)
+      min: 130
+      typ: 186
+      max: 285
+    macros_100g:  # as-served, edible macros x 0.80
+      p: 16.6
+      f: 13.1
+      c: 0.5
+    tfda_refs:
+    - I0404102
+    - I0404302
+    method_notes: 'Composed per 100 g EDIBLE cooked meat+skin (bone excluded; handle bone loss in default_portion_g). Raw TFDA 棒棒腿(肉雞) I0404302
+      = 159 kcal (n=2) and 骨腿(肉雞) I0404102 = 196 (n=1); mean 178 (P 15.6, F 12.3). Cooked yield assumed 0.75 (roast/braise water loss): 178/0.75
+      = ~237, set to 232 so it matches the re-summed macros (P 20.8, F 16.4, C 0.6). Excludes deep-fry oil uptake and breading (oil.yaml adder;
+      breaded leg is higher). Min 185 ~ braised/lean; max 285 ~ crisp skin-on fried. Yield is an assumption.'
+    source:
+    - TFDA I0404102
+    - TFDA I0404302
+    - cook-yield assumption 0.75
+    confidence: low
+  pork_chop:
+    zh: 排骨
+    en: Pork chop (fried)
+    kind: solid
+    origin: composed
+    kcal_100g:  # AS-SERVED incl. bone = edible 245/286.6/346 x edible fraction 0.85/0.90/1.00 (QC)
+      min: 208.0
+      typ: 258.0
+      max: 346.0
+    macros_100g:
+      p: 21.0
+      f: 16.0
+      c: 12.8
+    tfda_refs:
+    - I0304201
+    - I0304301
+    - B0420101
+    method_notes: Composed per 100 g edible fried 排骨 EXCLUDING absorbed frying oil (oil.yaml adder supplies it). cooked pork loin chop (豬大排 I0304201
+      214 raw /0.78 yield) 85% by weight (274 kcal/100g, range 230-340); coating (starch/flour, TFDA B0420101 甘藷粉 358) 15% by weight (358 kcal/100g,
+      range 330-380). Raw 豬大排 I0304201 = 214 (n=1), 豬小排 I0304301 = 287 (n=3) bracket the cut range (max reflects fattier cuts). Cooking yield
+      0.78 and coating share 15% are assumptions. For bone-in chops, portions must be on edible weight.
+    source:
+    - TFDA I0304201
+    - TFDA I0304301
+    - TFDA B0420101 (甘藷粉 as coating)
+    - cook-yield and coating assumptions
+    confidence: low
+    components:
+    - name: cooked pork loin chop (豬大排 I0304201 214 raw /0.78 yield)
+      frac: 0.85
+      kcal: 274
+      kmin: 230
+      kmax: 340
+      p: 24.5
+      f: 18.8
+      c: 0.0
+      ref: I0304201
+    - name: coating (starch/flour, TFDA B0420101 甘藷粉 358)
+      frac: 0.15
+      kcal: 358
+      kmin: 330
+      kmax: 380
+      p: 1.0
+      f: 0.2
+      c: 85.5
+      ref: B0420101
+  braised_egg:
+    zh: 滷蛋
+    en: Braised egg
+    kind: solid
+    origin: direct
+    kcal_100g:
+      min: 175
+      typ: 191
+      max: 202
+    macros_100g:
+      p: 15.7
+      f: 11.4
+      c: 6.4
+    tfda_refs:
+    - K0120101
+    - K0120102
+    - K0120103
+    method_notes: TFDA K0120101 雞滷蛋(市售) = 191 kcal, n=3, sd 6.41 (sd propagated from macro sds; TFDA gives no sd for energy). 90% interval typ
+      +/-1.645 sd = 180.5-201.5; min lowered to 175 to include home-style K0120102 現煮 (178) and K0120103 隔夜 (182). Whole egg without shell. Direct
+      TFDA match (also K01121 茶葉蛋平均值 = 145 for tea eggs).
+    source:
+    - TFDA K0120101 雞滷蛋(市售)
+    - TFDA K0120102
+    - TFDA K0120103
+    confidence: high
+  fried_egg:
+    zh: 荷包蛋
+    en: Fried egg
+    kind: solid
+    origin: direct
+    kcal_100g:
+      min: 154.9
+      typ: 162
+      max: 169.1
+    macros_100g:
+      p: 14.0
+      f: 11.2
+      c: 1.4
+    tfda_refs:
+    - K0123101
+    - K0123201
+    method_notes: 'TFDA K0123101 荷包蛋(不加油) = 162 kcal, n=2, sd 4.33; interval = typ +/-1.645 sd. Deliberately the NO-OIL value: pan oil comes from
+      oil.yaml (pan_fry) to avoid double counting. Reference K0123201 荷包蛋(加油1小匙) = 192 kcal (n=2, sd 11.71), i.e. about +30 kcal from ~1 tsp oil.'
+    source:
+    - TFDA K0123101 荷包蛋(不加油)
+    - TFDA K0123201 (cross-check, with oil)
+    confidence: high
+  stirfried_greens:
+    zh: 炒青菜
+    en: Stir-fried greens
+    kind: solid
+    origin: composed
+    kcal_100g:
+      min: 16.0
+      typ: 24.5
+      max: 36.5
+    macros_100g:
+      p: 1.8
+      f: 0.2
+      c: 4.7
+    tfda_refs:
+    - E30001
+    - E3201202
+    - E3201204
+    - E3201303
+    method_notes: 'Composed from raw leafy vegetables, per 100 g COOKED (wilted) greens, EXCLUDING stir-fry oil (oil.yaml stir_fry supplies it).
+      Components: 甘藍平均值 raw cabbage E30001 (23, n=3 sd 1.2) /0.75 wilt yield 50% by weight (31 kcal/100g, range 20-45); 青江菜 raw bok choy E32012xx
+      (mean ~14, n=1 each) /0.75 wilt yield 50% by weight (18 kcal/100g, range 12-28). Raw values were divided by an assumed 0.75 wilting yield
+      and mixed 50/50. Very low energy, so absolute error is small; real value is dominated by the oil adder.'
+    source:
+    - TFDA E30001 甘藍平均值
+    - TFDA E3201202/E3201204/E3201303 青江菜
+    - wilting-yield assumption 0.75
+    confidence: med
+    components:
+    - name: 甘藍平均值 raw cabbage E30001 (23, n=3 sd 1.2) /0.75 wilt yield
+      frac: 0.5
+      kcal: 31
+      kmin: 20
+      kmax: 45
+      p: 1.7
+      f: 0.1
+      c: 6.4
+      ref: E30001
+    - name: 青江菜 raw bok choy E32012xx (mean ~14, n=1 each) /0.75 wilt yield
+      frac: 0.5
+      kcal: 18
+      kmin: 12
+      kmax: 28
+      p: 1.8
+      f: 0.2
+      c: 3.0
+      ref: E3201202
+  braised_tofu:
+    zh: 滷豆腐
+    en: Braised tofu
+    kind: solid
+    origin: composed
+    kcal_100g:
+      min: 80
+      typ: 105
+      max: 140
+    macros_100g:
+      p: 9.5
+      f: 5.0
+      c: 5.5
+    tfda_refs:
+    - R4700901
+    - R4700902
+    method_notes: Composed. TFDA 傳統豆腐 R4700901 = 88 kcal (n=1), R4700902 (2022) = 96 (n=1); mean 92 (P 9.1, F 4.5, C 4.0). Braising loses water
+      (yield assumed ~0.9) and adds soy sauce/sugar, so 92/0.9 = ~102 plus sauce = 105 typ. Max 140 allows for firm 豆乾/油豆腐-style items (TFDA R4701101
+      小三角油豆腐 = 160) photographed as 滷豆腐. Min 80 ~ soft tofu with little sauce uptake.
+    source:
+    - TFDA R4700901
+    - TFDA R4700902
+    - TFDA R4701101 (upper bound reference)
+    - yield assumption 0.9
+    confidence: low
+  beef_noodle_soup:
+    zh: 牛肉麵
+    en: Beef noodle soup (whole bowl)
+    kind: solid
+    origin: composed
+    kcal_100g:
+      min: 70.8
+      typ: 94.4
+      max: 125.0
+    macros_100g:
+      p: 5.6
+      f: 1.9
+      c: 12.3
+    tfda_refs:
+    - R2000901
+    - I03214
+    - I0108301
+    method_notes: 'Composed WHOLE BOWL (noodles+broth+beef) per 100 g of the entire bowl. cooked wheat noodles (拉麵 濕麵條 R2000901 292 raw /2.0 cooking
+      water uptake) 38% by weight (146 kcal/100g, range 120-175); broth with oil layer (豬骨湯 ~8 kcal + beef fat/oil/soy sauce, assumed) 50% by
+      weight (25 kcal/100g, range 12-45); braised beef (牛後腿腱子心 I0108301 139 raw /0.7 yield, with allowance for fattier 牛腩) 12% by weight (220
+      kcal/100g, range 160-300). Typical bowl ~650-700 g; fractions are assumptions (the broth share and broth oil are the main uncertainty).
+      TFDA has no cooked-noodle row: 拉麵 R2000901 is a raw wet noodle (292); the cooking uptake factor 2.0 is an assumption. Result ~90 kcal/100
+      g = ~600-650 kcal per bowl, consistent with commonly cited 600-700 kcal bowls. Min/max combine component ranges with fully correlated weights.'
+    source:
+    - TFDA R2000901
+    - TFDA I03214 豬骨湯平均值
+    - TFDA I0108301
+    - composition assumptions
+    confidence: low
+    components:
+    - name: cooked wheat noodles (拉麵 濕麵條 R2000901 292 raw /2.0 cooking water uptake)
+      frac: 0.38
+      kcal: 146
+      kmin: 120
+      kmax: 175
+      p: 4.6
+      f: 0.4
+      c: 31.0
+      ref: R2000901
+    - name: broth with oil layer (豬骨湯 ~8 kcal + beef fat/oil/soy sauce, assumed)
+      frac: 0.5
+      kcal: 25
+      kmin: 12
+      kmax: 45
+      p: 1.0
+      f: 1.5
+      c: 1.0
+      ref: I03214
+    - name: braised beef (牛後腿腱子心 I0108301 139 raw /0.7 yield, with allowance for fattier 牛腩)
+      frac: 0.12
+      kcal: 220
+      kmin: 160
+      kmax: 300
+      p: 28.0
+      f: 8.6
+      c: 0.0
+      ref: I0108301
+  boiled_dumplings:
+    zh: 水餃
+    en: Boiled dumplings
+    kind: solid
+    origin: direct
+    kcal_100g:
+      min: 184.4
+      typ: 217.0
+      max: 249.5
+    macros_100g:
+      p: 7.5
+      f: 10.1
+      c: 24.3
+    tfda_refs:
+    - R2200801
+    - R2201501
+    method_notes: 'TFDA prepared (already cooked) dumplings: R2200801 冷凍豬肉熟水餃 = 235 kcal and R2201501 熟水餃(高麗菜水餃) = 199, both n=1. typ = mean 217;
+      n=1 so +/-15% rule. Macros are the mean of both rows (P 7.2/7.4, F 10.1/10.1, C 28.9/19.7). Raw frozen pork dumplings (R2200201 = 208, n=2)
+      are consistent. Real filling (cabbage vs chive vs pork fat) moves this by +/-15% or more. Boiled: oil adder ~0.'
+    source:
+    - TFDA R2200801
+    - TFDA R2201501
+    - TFDA R2200201 (cross-check)
+    confidence: med
+  potstickers:
+    zh: 鍋貼
+    en: Potstickers
+    kind: solid
+    origin: direct
+    kcal_100g:
+      min: 202.3
+      typ: 238
+      max: 273.7
+    macros_100g:
+      p: 7.8
+      f: 11.3
+      c: 26.2
+    tfda_refs:
+    - R2201401
+    method_notes: TFDA R2201401 豬肉鍋貼 = 238 kcal, n=1 (sd 18.9 reported but n=1, so the +/-15% rule is used). Cooked state/pan oil is not documented
+      in TFDA; treated as BASE without added pan oil, and oil.yaml pan_fry supplies the shop oil (shop potstickers are usually fried in more oil
+      than home).
+    source:
+    - TFDA R2201401 豬肉鍋貼
+    confidence: med
+  scallion_pancake:
+    zh: 蔥油餅
+    en: Scallion pancake
+    kind: solid
+    origin: direct
+    kcal_100g:
+      min: 259.2
+      typ: 305
+      max: 350.8
+    macros_100g:
+      p: 8.3
+      f: 9.3
+      c: 46.9
+    tfda_refs:
+    - R2700101
+    - R2700201
+    method_notes: 'TFDA R2700101 蔥油餅 = 305 kcal, n=1 (+/-15% rule). Frozen raw 冷凍蔥油餅 R2700201 = 258 (n=2, sd 31.5) is a lower cross-check for
+      the uncooked disc; the 305 row is treated as ready-to-eat. Street/shop pancakes are griddled in extra oil: the oil.yaml pan_fry adder (wide)
+      handles that and is the dominant uncertainty.'
+    source:
+    - TFDA R2700101 蔥油餅
+    - TFDA R2700201 冷凍蔥油餅 (cross-check)
+    confidence: med
+  fried_chicken_cutlet:
+    zh: 雞排
+    en: Fried chicken cutlet
+    kind: solid
+    origin: composed
+    kcal_100g:
+      min: 197.6
+      typ: 253.2
+      max: 308.8
+    macros_100g:
+      p: 17.5
+      f: 12.4
+      c: 16.0
+    tfda_refs:
+    - I04044
+    - I0404402
+    - I0404403
+    - B0420101
+    - P1500201
+    method_notes: 'Composed per 100 g of fried cutlet EXCLUDING absorbed frying oil (oil.yaml deep_fry_breaded; PLAN cites ~15% fat uptake). cooked
+      chicken meat (雞排 raw 183 [I04044 avg, n=2 sd 47] /0.80 yield) 80% by weight (229 kcal/100g, range 172-286); coating (地瓜粉/炸雞粉; TFDA B0420101
+      甘藷粉 358, P1500201 炸雞粉 333) 20% by weight (350 kcal/100g, range 300-400). TFDA raw 雞排 rows span 158-251 (avg I04044 = 183, sd 47, n=2): very
+      variable (breast vs thigh, skin), so the meat range is widened to +/-25% around 229 rather than using the huge sd. Cook yield 0.80 and 20%
+      coating are assumptions.'
+    source:
+    - TFDA I04044 雞排平均值
+    - TFDA I0404402
+    - TFDA I0404403
+    - TFDA B0420101
+    - TFDA P1500201
+    - 'assumptions: yield 0.80, coating 20%'
+    confidence: low
+    components:
+    - name: cooked chicken meat (雞排 raw 183 [I04044 avg, n=2 sd 47] /0.80 yield)
+      frac: 0.8
+      kcal: 229
+      kmin: 172
+      kmax: 286
+      p: 21.4
+      f: 15.3
+      c: 0.0
+      ref: I04044
+    - name: coating (地瓜粉/炸雞粉; TFDA B0420101 甘藷粉 358, P1500201 炸雞粉 333)
+      frac: 0.2
+      kcal: 350
+      kmin: 300
+      kmax: 400
+      p: 2.0
+      f: 1.0
+      c: 80.0
+      ref: B0420101
+  popcorn_chicken:
+    zh: 鹽酥雞
+    en: Taiwanese popcorn chicken
+    kind: solid
+    origin: composed
+    kcal_100g:
+      min: 204.0
+      typ: 259.2
+      max: 314.5
+    macros_100g:
+      p: 16.5
+      f: 11.7
+      c: 20.0
+    tfda_refs:
+    - I04044
+    - B0420101
+    - P1500201
+    method_notes: Composed like 雞排 but with a larger coating share (25%; small pieces have more surface) per 100 g EXCLUDING frying oil (oil.yaml
+      deep_fry_breaded; small pieces absorb a lot, set there). cooked chicken meat (I04044 raw 183 /0.80 yield) 75% by weight (229 kcal/100g,
+      range 172-286); coating (地瓜粉 etc., B0420101 / P1500201) 25% by weight (350 kcal/100g, range 300-400). No TFDA row for the dish itself. Real
+      鹽酥雞 plates also include fried sides (vegetables, tofu, sweet potato) that this class does not cover.
+    source:
+    - TFDA I04044
+    - TFDA B0420101
+    - TFDA P1500201
+    - 'assumptions: yield 0.80, coating 25%'
+    confidence: low
+    components:
+    - name: cooked chicken meat (I04044 raw 183 /0.80 yield)
+      frac: 0.75
+      kcal: 229
+      kmin: 172
+      kmax: 286
+      p: 21.4
+      f: 15.3
+      c: 0.0
+      ref: I04044
+    - name: coating (地瓜粉 etc., B0420101 / P1500201)
+      frac: 0.25
+      kcal: 350
+      kmin: 300
+      kmax: 400
+      p: 2.0
+      f: 1.0
+      c: 80.0
+      ref: B0420101
+  bubble_milk_tea:
+    zh: 珍珠奶茶
+    en: Bubble milk tea
+    kind: drink
+    origin: direct
+    kcal_100g:
+      min: 70.7
+      typ: 84
+      max: 97.3
+    macros_100g:
+      p: 0.2
+      f: 2.7
+      c: 14.5
+    tfda_refs:
+    - O0702101
+    - O0702001
+    - O0702201
+    method_notes: 'INDICATIVE ONLY: drink kcal in the app is computed from drinks.yaml (sugar_g*4 + base + toppings), not from this value. TFDA
+      O0702101 珍珠奶茶(去冰,半糖) 700 mL cup = 84 kcal/100 g (n=4, sd 8.11); interval typ +/-1.645 sd = 70.7-97.3, which also spans 微糖 O0702001 (75)
+      and 全糖 O0702201 (94). Sample prep note: blended, then the clear supernatant was analysed, so pearl content may be partly under-represented.
+      84 kcal/100 g x ~700 g = ~590 kcal.'
+    source:
+    - TFDA O0702101
+    - TFDA O0702001
+    - TFDA O0702201
+    confidence: med

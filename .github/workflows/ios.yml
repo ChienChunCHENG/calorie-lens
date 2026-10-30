@@ -1,0 +1,83 @@
+name: iOS build (unsigned IPA)
+
+on:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest Xcode 26.x
+        shell: bash
+        run: |
+          set -e
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)
+          if [ -z "$XC" ]; then
+            echo "No Xcode 26.x found. Installed:"
+            ls -d /Applications/Xcode*
+            exit 1
+          fi
+          echo "Using $XC"
+          sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        run: cd ios && xcodegen generate
+
+      - name: Build (unsigned)
+        shell: bash
+        run: |
+          set -eo pipefail
+          CMD=(xcodebuild
+            -project ios/CalorieLens.xcodeproj
+            -scheme CalorieLens
+            -sdk iphoneos
+            -configuration Release
+            -derivedDataPath build
+            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_REQUIRED=NO
+            CODE_SIGN_IDENTITY=""
+            build)
+          if command -v xcpretty >/dev/null 2>&1; then
+            "${CMD[@]}" | xcpretty
+          else
+            "${CMD[@]}"
+          fi
+
+      - name: Package IPA
+        shell: bash
+        run: |
+          set -e
+          APP=build/Build/Products/Release-iphoneos/CalorieLens.app
+          test -d "$APP"
+          rm -rf Payload CalorieLens.ipa
+          mkdir Payload
+          cp -R "$APP" Payload/
+          zip -qry CalorieLens.ipa Payload
+          ls -l CalorieLens.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: CalorieLens-ipa
+          path: CalorieLens.ipa
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload dSYM
+        uses: actions/upload-artifact@v4
+        with:
+          name: CalorieLens-dSYM
+          path: build/Build/Products/Release-iphoneos/*.dSYM
+          retention-days: 14
+          if-no-files-found: ignore

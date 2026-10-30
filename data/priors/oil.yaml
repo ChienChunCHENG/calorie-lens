@@ -1,0 +1,70 @@
+# Cooking-oil adder priors. oil_g_per_100g = extra oil RETAINED in the food as eaten, per 100 g cooked food, ON TOP OF the
+# kcal of the raw/base ingredient. Engine adds min*9 / max*9 kcal per 100 g as an interval.
+# Evidence is weak: the one cited retained-fat datapoint is deep-fried chicken (~15 g/100 g) and the Chinese cooking-oil survey
+# measures oil USED, not retained. Ranges are deliberately wide; entries marked judgement have no measurement behind them.
+version: 1
+methods:
+  stir_fry:
+    oil_g_per_100g: {min: 1.5, max: 6.0}
+    source:
+      - "Pu G et al., Int J Environ Res Public Health 2019;16(18):3367, doi:10.3390/ijerph16183367 (https://pmc.ncbi.nlm.nih.gov/articles/PMC6765806/). 302 chef-cooked dishes, 8 cuisines, oil USED per 100 g raw food: pure vegetable 4.6 g, vegetables median 4.8, all dishes mean 8.1, soy products 4.6. Pan residue not separated from absorbed."
+      - "Pan WH et al., J Am Diet Assoc 1993;93:1442-4 (https://ir.sinica.edu.tw/handle/201000000A/23518): Taiwan study, leafy greens absorb most of the added oil, peas/wood ear/tofu/green pepper about half. Per-100 g values not accessed."
+      - "Dietitian estimate ~5 g oil per 100 g stir-fried vegetables (edh.tw; not peer reviewed)."
+    note: "min 1.5 = about 30% of 4.6 g used retained (judgement); max 6 = oily restaurant greens."
+    confidence: low
+  deep_fry_breaded:
+    oil_g_per_100g: {min: 4.0, max: 16.0}
+    source:
+      - "Chicken breast deep-fried in canola oil: 15.10% fat in product, vs 8.5-9.2% with oleogels (NC A&T oleogel frying study, https://profiles.ncat.edu/en/publications/study-of-oleogel-as-a-frying-medium-for-deep-fried-chicken-4/ ; number taken from a search snippet, full text not read). It is total fat incl. native chicken fat, so an upper anchor for absorbed oil."
+      - "Review: crust can be up to one-third (sometimes 50%) of fried batter-breaded product weight and holds the oil (https://hal.archives-ouvertes.fr/hal-01194942; not read in full)."
+      - "Linkou Chang Gung dietitian: one fried chicken cutlet holds about 3 tablespoons (~40 g) oil (UDN, https://health.udn.com/health/story/6037/5823394; popular press). Over ~250 g that is ~16 g/100 g, consistent with max."
+    note: "Thick starch-batter items (雞排, 鹽酥雞) toward max; thin crumb coat toward min. min 4 is judgement."
+    confidence: med
+  pan_fry:
+    oil_g_per_100g: {min: 2.0, max: 8.0}
+    source:
+      - "No measurement found. Judgement anchored on Pu 2019 (https://pmc.ncbi.nlm.nih.gov/articles/PMC6765806/): mean 8.1 g/100 g used across hot dishes, 'adding flavor' purpose 2.6 g."
+    note: "Fried egg and scallion pancake near max (visible oil)."
+    confidence: low
+  braise:
+    oil_g_per_100g: {min: 0.0, max: 4.0}
+    source:
+      - "No measurement found. Judgement: braising liquid mostly soy/water; sear oil only. Pu 2019 soy products median 4.6 g used is a cap (https://pmc.ncbi.nlm.nih.gov/articles/PMC6765806/)."
+    note: "Rendered pork fat in 滷肉 sauce is NOT an adder; it belongs in lu_rou_fan kcal."
+    confidence: low
+  boil:
+    oil_g_per_100g: {min: 0.0, max: 1.0}
+    source:
+      - "Judgement: nothing added; max covers a sesame/chili-oil drizzle. Broth fat belongs in whole-bowl kcal."
+    confidence: low
+  steam:
+    oil_g_per_100g: {min: 0.0, max: 0.5}
+    source:
+      - "Judgement."
+    confidence: med
+  none:
+    oil_g_per_100g: {min: 0.0, max: 0.0}
+    source:
+      - "by definition"
+    confidence: high
+
+# adder_applies: true = engine adds the oil adder; false = suppress (oil 0,0) because the kcal source is expected to already
+# contain cooking fat (TFDA prepared/fried item or recipe with oil) and adding would DOUBLE COUNT.
+# All values are provisional, set WITHOUT seeing dishes.yaml, so every food row is review_with_dishes: true.
+# Rule on review: kcal_100g from TFDA RAW ingredient(s) -> true; from an as-eaten cooked/fried item -> false.
+dish_method:
+  rice_white:           {method: steam,            adder_applies: false, reason: "No oil in plain rice."}
+  lu_rou_fan:           {method: braise,           adder_applies: false, reason: "Fat is in pork/sauce; assume as-eaten kcal."}
+  chicken_leg:          {method: deep_fry_breaded, adder_applies: true, reason: "dishes.yaml chicken_leg is cooked edible meat excluding fry oil and breading; adder supplies it."}
+  pork_chop:            {method: deep_fry_breaded, adder_applies: true, reason: "dishes.yaml pork_chop explicitly EXCLUDES absorbed frying oil."}
+  braised_egg:          {method: braise,           adder_applies: false, reason: "Boiled egg; braising adds no oil."}
+  fried_egg:            {method: pan_fry,          adder_applies: true, reason: "dishes.yaml uses TFDA K0123101 荷包蛋(不加油); pan oil comes from here."}
+  stirfried_greens:     {method: stir_fry,         adder_applies: true, reason: "dishes.yaml greens exclude stir-fry oil; oil is the main hidden kcal."}
+  braised_tofu:         {method: braise,           adder_applies: false, reason: "Small contribution; assume as-eaten."}
+  beef_noodle_soup:     {method: boil,             adder_applies: false, reason: "Whole-bowl kcal expected to include broth fat."}
+  boiled_dumplings:     {method: boil,             adder_applies: false, reason: "Filling fat is in recipe kcal; boiling adds none."}
+  potstickers:          {method: pan_fry,          adder_applies: true, reason: "dishes.yaml treats TFDA R2201401 as base without shop pan oil."}
+  scallion_pancake:     {method: pan_fry,          adder_applies: true, reason: "dishes.yaml treats TFDA R2700101 as base; shop griddle oil added here."}
+  fried_chicken_cutlet: {method: deep_fry_breaded, adder_applies: true, reason: "dishes.yaml composed cutlet excludes absorbed frying oil."}
+  popcorn_chicken:      {method: deep_fry_breaded, adder_applies: true, reason: "dishes.yaml composed popcorn chicken excludes absorbed frying oil."}
+  bubble_milk_tea:      {method: none,             adder_applies: false, reason: "Drink; kcal from drinks.yaml."}

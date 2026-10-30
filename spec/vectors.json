@@ -1,0 +1,1095 @@
+{
+ "version": 1,
+ "cases": [
+  {
+   "name": "rice_typical",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "rice",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.6,
+      "typ": 0.7,
+      "max": 0.8
+     },
+     "kcal_100g": {
+      "min": 125,
+      "typ": 140,
+      "max": 170
+     },
+     "oil_g_per_100g": {
+      "min": 0,
+      "max": 0
+     },
+     "default_portion_g": {
+      "min": 150,
+      "typ": 200,
+      "max": 280
+     }
+    },
+    "volumeMl": {
+     "min": 200,
+     "typ": 280,
+     "max": 380
+    }
+   },
+   "expected": {
+    "lo": 186.93531418466694,
+    "med": 274.4,
+    "hi": 402.788313852878,
+    "flags": []
+   }
+  },
+  {
+   "name": "fried_wide_with_oil",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "fried_cutlet",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.5,
+      "typ": 0.8,
+      "max": 1.2
+     },
+     "kcal_100g": {
+      "min": 220,
+      "typ": 280,
+      "max": 380
+     },
+     "oil_g_per_100g": {
+      "min": 4,
+      "max": 12
+     },
+     "default_portion_g": {
+      "min": 150,
+      "typ": 220,
+      "max": 320
+     }
+    },
+    "volumeMl": {
+     "min": 150,
+     "typ": 300,
+     "max": 600
+    }
+   },
+   "expected": {
+    "lo": 369.5894336682263,
+    "med": 844.8,
+    "hi": 1853.8357678339733,
+    "flags": [
+     "low_confidence"
+    ]
+   }
+  },
+  {
+   "name": "rice_null_volume_default_portion",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "rice",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.6,
+      "typ": 0.7,
+      "max": 0.8
+     },
+     "kcal_100g": {
+      "min": 125,
+      "typ": 140,
+      "max": 170
+     },
+     "oil_g_per_100g": {
+      "min": 0,
+      "max": 0
+     },
+     "default_portion_g": {
+      "min": 150,
+      "typ": 200,
+      "max": 280
+     }
+    },
+    "volumeMl": null
+   },
+   "expected": {
+    "lo": 197.72903413057298,
+    "med": 280.0,
+    "hi": 396.50221498693776,
+    "flags": [
+     "portion_default"
+    ]
+   }
+  },
+  {
+   "name": "fried_null_volume_default_portion_oil",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "fried_cutlet",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.5,
+      "typ": 0.8,
+      "max": 1.2
+     },
+     "kcal_100g": {
+      "min": 220,
+      "typ": 280,
+      "max": 380
+     },
+     "oil_g_per_100g": {
+      "min": 4,
+      "max": 12
+     },
+     "default_portion_g": {
+      "min": 150,
+      "typ": 220,
+      "max": 320
+     }
+    },
+    "volumeMl": null
+   },
+   "expected": {
+    "lo": 465.31249507405624,
+    "med": 774.4,
+    "hi": 1220.3602184363924,
+    "flags": [
+     "portion_default"
+    ]
+   }
+  },
+  {
+   "name": "floor_zero_width_all_factors",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "fixed",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.8,
+      "typ": 0.8,
+      "max": 0.8
+     },
+     "kcal_100g": {
+      "min": 200,
+      "typ": 200,
+      "max": 200
+     },
+     "oil_g_per_100g": {
+      "min": 0,
+      "max": 0
+     },
+     "default_portion_g": {
+      "min": 100,
+      "typ": 100,
+      "max": 100
+     }
+    },
+    "volumeMl": {
+     "min": 250,
+     "typ": 250,
+     "max": 250
+    }
+   },
+   "expected": {
+    "lo": 340.0,
+    "med": 400.0,
+    "hi": 459.99999999999994,
+    "flags": []
+   }
+  },
+  {
+   "name": "zero_width_null_volume",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "fixed",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.8,
+      "typ": 0.8,
+      "max": 0.8
+     },
+     "kcal_100g": {
+      "min": 200,
+      "typ": 200,
+      "max": 200
+     },
+     "oil_g_per_100g": {
+      "min": 0,
+      "max": 0
+     },
+     "default_portion_g": {
+      "min": 100,
+      "typ": 100,
+      "max": 100
+     }
+    },
+    "volumeMl": null
+   },
+   "expected": {
+    "lo": 170.0,
+    "med": 200.0,
+    "hi": 229.99999999999997,
+    "flags": [
+     "portion_default"
+    ]
+   }
+  },
+  {
+   "name": "no_oil_field_noodle",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "noodle",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.8,
+      "typ": 0.9,
+      "max": 1.0
+     },
+     "kcal_100g": {
+      "min": 90,
+      "typ": 100,
+      "max": 115
+     },
+     "default_portion_g": {
+      "min": 300,
+      "typ": 450,
+      "max": 600
+     }
+    },
+    "volumeMl": {
+     "min": 400,
+     "typ": 500,
+     "max": 650
+    }
+   },
+   "expected": {
+    "lo": 335.3955413844144,
+    "med": 450.0,
+    "hi": 603.7647345106003,
+    "flags": []
+   }
+  },
+  {
+   "name": "typ_not_geometric_mean_skewed",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "skew",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.9,
+      "typ": 1.3,
+      "max": 1.4
+     },
+     "kcal_100g": {
+      "min": 100,
+      "typ": 100,
+      "max": 100
+     }
+    },
+    "volumeMl": {
+     "min": 100,
+     "typ": 100,
+     "max": 100
+    }
+   },
+   "expected": {
+    "lo": 104.23188434584551,
+    "med": 130.0,
+    "hi": 162.1384867602041,
+    "flags": []
+   }
+  },
+  {
+   "name": "low_confidence_wide",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "wide",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.3,
+      "typ": 0.8,
+      "max": 1.6
+     },
+     "kcal_100g": {
+      "min": 100,
+      "typ": 250,
+      "max": 500
+     },
+     "default_portion_g": {
+      "min": 50,
+      "typ": 150,
+      "max": 450
+     }
+    },
+    "volumeMl": {
+     "min": 100,
+     "typ": 400,
+     "max": 900
+    }
+   },
+   "expected": {
+    "lo": 161.76632151877882,
+    "med": 800.0,
+    "hi": 3956.32412229702,
+    "flags": [
+     "low_confidence"
+    ]
+   }
+  },
+  {
+   "name": "low_confidence_null_volume",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "wide",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.3,
+      "typ": 0.8,
+      "max": 1.6
+     },
+     "kcal_100g": {
+      "min": 100,
+      "typ": 250,
+      "max": 500
+     },
+     "default_portion_g": {
+      "min": 50,
+      "typ": 150,
+      "max": 450
+     }
+    },
+    "volumeMl": null
+   },
+   "expected": {
+    "lo": 96.07391385543572,
+    "med": 375.0,
+    "hi": 1463.716781764519,
+    "flags": [
+     "portion_default",
+     "low_confidence"
+    ]
+   }
+  },
+  {
+   "name": "narrow_inputs_floor_inactive",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "rice",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.6,
+      "typ": 0.7,
+      "max": 0.8
+     },
+     "kcal_100g": {
+      "min": 125,
+      "typ": 140,
+      "max": 170
+     },
+     "oil_g_per_100g": {
+      "min": 0,
+      "max": 0
+     },
+     "default_portion_g": {
+      "min": 150,
+      "typ": 200,
+      "max": 280
+     }
+    },
+    "volumeMl": {
+     "min": 279,
+     "typ": 280,
+     "max": 281
+    }
+   },
+   "expected": {
+    "lo": 222.29757972169566,
+    "med": 274.4,
+    "hi": 338.7142590318151,
+    "flags": []
+   }
+  },
+  {
+   "name": "narrow_noodle_floor_inactive",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "noodle",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.8,
+      "typ": 0.9,
+      "max": 1.0
+     },
+     "kcal_100g": {
+      "min": 90,
+      "typ": 100,
+      "max": 115
+     },
+     "default_portion_g": {
+      "min": 300,
+      "typ": 450,
+      "max": 600
+     }
+    },
+    "volumeMl": {
+     "min": 499,
+     "typ": 500,
+     "max": 501
+    }
+   },
+   "expected": {
+    "lo": 381.26558842965113,
+    "med": 450.0,
+    "hi": 531.1258244785553,
+    "flags": []
+   }
+  },
+  {
+   "name": "drink_full_700",
+   "fn": "estimateDrink",
+   "input": {
+    "drink": {
+     "id": "tea",
+     "kind": "drink",
+     "base_kcal_per_700ml": {
+      "min": 120,
+      "typ": 180,
+      "max": 260
+     },
+     "toppings_kcal": {
+      "min": 100,
+      "typ": 150,
+      "max": 220
+     }
+    },
+    "sizeMl": 700,
+    "sugarLevel": "full",
+    "fullSugarGPer700": 60,
+    "sugarFraction": {
+     "full": 1.0,
+     "less": 0.7,
+     "half": 0.5,
+     "light": 0.3,
+     "none": 0.0
+    }
+   },
+   "expected": {
+    "lo": 400.0,
+    "med": 570.0,
+    "hi": 780.0,
+    "flags": [
+     "drink_sugar_assumed"
+    ]
+   }
+  },
+  {
+   "name": "drink_less_700",
+   "fn": "estimateDrink",
+   "input": {
+    "drink": {
+     "id": "tea",
+     "kind": "drink",
+     "base_kcal_per_700ml": {
+      "min": 120,
+      "typ": 180,
+      "max": 260
+     },
+     "toppings_kcal": {
+      "min": 100,
+      "typ": 150,
+      "max": 220
+     }
+    },
+    "sizeMl": 700,
+    "sugarLevel": "less",
+    "fullSugarGPer700": 60,
+    "sugarFraction": {
+     "full": 1.0,
+     "less": 0.7,
+     "half": 0.5,
+     "light": 0.3,
+     "none": 0.0
+    }
+   },
+   "expected": {
+    "lo": 346.0,
+    "med": 498.0,
+    "hi": 690.0,
+    "flags": [
+     "drink_sugar_assumed"
+    ]
+   }
+  },
+  {
+   "name": "drink_half_700",
+   "fn": "estimateDrink",
+   "input": {
+    "drink": {
+     "id": "tea",
+     "kind": "drink",
+     "base_kcal_per_700ml": {
+      "min": 120,
+      "typ": 180,
+      "max": 260
+     },
+     "toppings_kcal": {
+      "min": 100,
+      "typ": 150,
+      "max": 220
+     }
+    },
+    "sizeMl": 700,
+    "sugarLevel": "half",
+    "fullSugarGPer700": 60,
+    "sugarFraction": {
+     "full": 1.0,
+     "less": 0.7,
+     "half": 0.5,
+     "light": 0.3,
+     "none": 0.0
+    }
+   },
+   "expected": {
+    "lo": 310.0,
+    "med": 450.0,
+    "hi": 630.0,
+    "flags": [
+     "drink_sugar_assumed"
+    ]
+   }
+  },
+  {
+   "name": "drink_light_700",
+   "fn": "estimateDrink",
+   "input": {
+    "drink": {
+     "id": "tea",
+     "kind": "drink",
+     "base_kcal_per_700ml": {
+      "min": 120,
+      "typ": 180,
+      "max": 260
+     },
+     "toppings_kcal": {
+      "min": 100,
+      "typ": 150,
+      "max": 220
+     }
+    },
+    "sizeMl": 700,
+    "sugarLevel": "light",
+    "fullSugarGPer700": 60,
+    "sugarFraction": {
+     "full": 1.0,
+     "less": 0.7,
+     "half": 0.5,
+     "light": 0.3,
+     "none": 0.0
+    }
+   },
+   "expected": {
+    "lo": 274.0,
+    "med": 402.0,
+    "hi": 570.0,
+    "flags": [
+     "drink_sugar_assumed"
+    ]
+   }
+  },
+  {
+   "name": "drink_none_700",
+   "fn": "estimateDrink",
+   "input": {
+    "drink": {
+     "id": "tea",
+     "kind": "drink",
+     "base_kcal_per_700ml": {
+      "min": 120,
+      "typ": 180,
+      "max": 260
+     },
+     "toppings_kcal": {
+      "min": 100,
+      "typ": 150,
+      "max": 220
+     }
+    },
+    "sizeMl": 700,
+    "sugarLevel": "none",
+    "fullSugarGPer700": 60,
+    "sugarFraction": {
+     "full": 1.0,
+     "less": 0.7,
+     "half": 0.5,
+     "light": 0.3,
+     "none": 0.0
+    }
+   },
+   "expected": {
+    "lo": 220.0,
+    "med": 330.0,
+    "hi": 480.0,
+    "flags": [
+     "drink_sugar_assumed"
+    ]
+   }
+  },
+  {
+   "name": "drink_full_500",
+   "fn": "estimateDrink",
+   "input": {
+    "drink": {
+     "id": "tea",
+     "kind": "drink",
+     "base_kcal_per_700ml": {
+      "min": 120,
+      "typ": 180,
+      "max": 260
+     },
+     "toppings_kcal": {
+      "min": 100,
+      "typ": 150,
+      "max": 220
+     }
+    },
+    "sizeMl": 500,
+    "sugarLevel": "full",
+    "fullSugarGPer700": 60,
+    "sugarFraction": {
+     "full": 1.0,
+     "less": 0.7,
+     "half": 0.5,
+     "light": 0.3,
+     "none": 0.0
+    }
+   },
+   "expected": {
+    "lo": 314.2857142857143,
+    "med": 450.0,
+    "hi": 620.0,
+    "flags": [
+     "drink_sugar_assumed"
+    ]
+   }
+  },
+  {
+   "name": "drink_none_500",
+   "fn": "estimateDrink",
+   "input": {
+    "drink": {
+     "id": "tea",
+     "kind": "drink",
+     "base_kcal_per_700ml": {
+      "min": 120,
+      "typ": 180,
+      "max": 260
+     },
+     "toppings_kcal": {
+      "min": 100,
+      "typ": 150,
+      "max": 220
+     }
+    },
+    "sizeMl": 500,
+    "sugarLevel": "none",
+    "fullSugarGPer700": 60,
+    "sugarFraction": {
+     "full": 1.0,
+     "less": 0.7,
+     "half": 0.5,
+     "light": 0.3,
+     "none": 0.0
+    }
+   },
+   "expected": {
+    "lo": 185.71428571428572,
+    "med": 278.57142857142856,
+    "hi": 405.7142857142857,
+    "flags": [
+     "drink_sugar_assumed"
+    ]
+   }
+  },
+  {
+   "name": "drink_zero_everything_none",
+   "fn": "estimateDrink",
+   "input": {
+    "drink": {
+     "id": "plain_tea",
+     "kind": "drink",
+     "base_kcal_per_700ml": {
+      "min": 0,
+      "typ": 0,
+      "max": 0
+     },
+     "toppings_kcal": {
+      "min": 0,
+      "typ": 0,
+      "max": 0
+     }
+    },
+    "sizeMl": 700,
+    "sugarLevel": "none",
+    "fullSugarGPer700": 60,
+    "sugarFraction": {
+     "full": 1.0,
+     "less": 0.7,
+     "half": 0.5,
+     "light": 0.3,
+     "none": 0.0
+    }
+   },
+   "expected": {
+    "lo": 0.0,
+    "med": 0.0,
+    "hi": 0.0,
+    "flags": [
+     "drink_sugar_assumed"
+    ]
+   }
+  },
+  {
+   "name": "drink_plain_tea_full_sugar",
+   "fn": "estimateDrink",
+   "input": {
+    "drink": {
+     "id": "plain_tea",
+     "kind": "drink",
+     "base_kcal_per_700ml": {
+      "min": 0,
+      "typ": 0,
+      "max": 0
+     },
+     "toppings_kcal": {
+      "min": 0,
+      "typ": 0,
+      "max": 0
+     }
+    },
+    "sizeMl": 700,
+    "sugarLevel": "full",
+    "fullSugarGPer700": 60,
+    "sugarFraction": {
+     "full": 1.0,
+     "less": 0.7,
+     "half": 0.5,
+     "light": 0.3,
+     "none": 0.0
+    }
+   },
+   "expected": {
+    "lo": 180.0,
+    "med": 240.0,
+    "hi": 300.0,
+    "flags": [
+     "drink_sugar_assumed"
+    ]
+   }
+  },
+  {
+   "name": "meal_four_items",
+   "fn": "combineMeal",
+   "input": {
+    "items": [
+     {
+      "id": "rice",
+      "lo": 186.93531418466694,
+      "med": 274.4,
+      "hi": 402.788313852878,
+      "flags": []
+     },
+     {
+      "id": "fried_cutlet",
+      "lo": 369.5894336682263,
+      "med": 844.8,
+      "hi": 1853.8357678339733,
+      "flags": [
+       "low_confidence"
+      ]
+     },
+     {
+      "id": "noodle",
+      "lo": 311.5753254536088,
+      "med": 450.0,
+      "hi": 649.9230954992639,
+      "flags": [
+       "portion_default"
+      ]
+     },
+     {
+      "id": "tea",
+      "lo": 310.0,
+      "med": 450.0,
+      "hi": 630.0,
+      "flags": [
+       "drink_sugar_assumed"
+      ]
+     }
+    ]
+   },
+   "expected": {
+    "lo": 1497.4370805227584,
+    "med": 2019.1999999999998,
+    "hi": 3071.343518735105,
+    "flags": []
+   }
+  },
+  {
+   "name": "meal_single_item",
+   "fn": "combineMeal",
+   "input": {
+    "items": [
+     {
+      "id": "rice",
+      "lo": 186.93531418466694,
+      "med": 274.4,
+      "hi": 402.788313852878,
+      "flags": []
+     }
+    ]
+   },
+   "expected": {
+    "lo": 186.93531418466694,
+    "med": 274.4,
+    "hi": 402.788313852878,
+    "flags": []
+   }
+  },
+  {
+   "name": "meal_empty",
+   "fn": "combineMeal",
+   "input": {
+    "items": []
+   },
+   "expected": {
+    "lo": 0.0,
+    "med": 0,
+    "hi": 0.0,
+    "flags": []
+   }
+  },
+  {
+   "name": "err_min_zero",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "rice",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.6,
+      "typ": 0.7,
+      "max": 0.8
+     },
+     "kcal_100g": {
+      "min": 125,
+      "typ": 140,
+      "max": 170
+     },
+     "oil_g_per_100g": {
+      "min": 0,
+      "max": 0
+     },
+     "default_portion_g": {
+      "min": 150,
+      "typ": 200,
+      "max": 280
+     }
+    },
+    "volumeMl": {
+     "min": 0,
+     "typ": 280,
+     "max": 380
+    }
+   },
+   "expected": {
+    "error": true
+   }
+  },
+  {
+   "name": "err_negative_min",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "rice",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.6,
+      "typ": 0.7,
+      "max": 0.8
+     },
+     "kcal_100g": {
+      "min": 125,
+      "typ": 140,
+      "max": 170
+     },
+     "oil_g_per_100g": {
+      "min": 0,
+      "max": 0
+     },
+     "default_portion_g": {
+      "min": 150,
+      "typ": 200,
+      "max": 280
+     }
+    },
+    "volumeMl": {
+     "min": -1,
+     "typ": 280,
+     "max": 380
+    }
+   },
+   "expected": {
+    "error": true
+   }
+  },
+  {
+   "name": "err_min_gt_typ",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "rice",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.6,
+      "typ": 0.7,
+      "max": 0.8
+     },
+     "kcal_100g": {
+      "min": 125,
+      "typ": 140,
+      "max": 170
+     },
+     "oil_g_per_100g": {
+      "min": 0,
+      "max": 0
+     },
+     "default_portion_g": {
+      "min": 150,
+      "typ": 200,
+      "max": 280
+     }
+    },
+    "volumeMl": {
+     "min": 300,
+     "typ": 280,
+     "max": 380
+    }
+   },
+   "expected": {
+    "error": true
+   }
+  },
+  {
+   "name": "err_kcal_min_zero",
+   "fn": "estimateSolid",
+   "input": {
+    "dish": {
+     "id": "rice",
+     "kind": "solid",
+     "density_g_ml": {
+      "min": 0.6,
+      "typ": 0.7,
+      "max": 0.8
+     },
+     "kcal_100g": {
+      "min": 0,
+      "typ": 140,
+      "max": 170
+     },
+     "oil_g_per_100g": {
+      "min": 0,
+      "max": 0
+     },
+     "default_portion_g": {
+      "min": 150,
+      "typ": 200,
+      "max": 280
+     }
+    },
+    "volumeMl": {
+     "min": 200,
+     "typ": 280,
+     "max": 380
+    }
+   },
+   "expected": {
+    "error": true
+   }
+  },
+  {
+   "name": "err_unknown_sugar_level",
+   "fn": "estimateDrink",
+   "input": {
+    "drink": {
+     "id": "tea",
+     "kind": "drink",
+     "base_kcal_per_700ml": {
+      "min": 120,
+      "typ": 180,
+      "max": 260
+     },
+     "toppings_kcal": {
+      "min": 100,
+      "typ": 150,
+      "max": 220
+     }
+    },
+    "sizeMl": 700,
+    "sugarLevel": "extra",
+    "fullSugarGPer700": 60,
+    "sugarFraction": {
+     "full": 1.0,
+     "less": 0.7,
+     "half": 0.5,
+     "light": 0.3,
+     "none": 0.0
+    }
+   },
+   "expected": {
+    "error": true
+   }
+  },
+  {
+   "name": "err_nonpositive_size",
+   "fn": "estimateDrink",
+   "input": {
+    "drink": {
+     "id": "tea",
+     "kind": "drink",
+     "base_kcal_per_700ml": {
+      "min": 120,
+      "typ": 180,
+      "max": 260
+     },
+     "toppings_kcal": {
+      "min": 100,
+      "typ": 150,
+      "max": 220
+     }
+    },
+    "sizeMl": 0,
+    "sugarLevel": "full",
+    "fullSugarGPer700": 60,
+    "sugarFraction": {
+     "full": 1.0,
+     "less": 0.7,
+     "half": 0.5,
+     "light": 0.3,
+     "none": 0.0
+    }
+   },
+   "expected": {
+    "error": true
+   }
+  }
+ ]
+}

@@ -1,0 +1,58 @@
+name: CalorieLens
+options:
+  bundleIdPrefix: dev.calorielens
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_IDENTITY: ""
+    CODE_SIGNING_ALLOWED: "NO"
+    CODE_SIGNING_REQUIRED: "NO"
+targets:
+  CalorieLens:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources/CalorieLens
+        excludes:
+          - "**/.gitkeep"
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Calorie Lens
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        LSRequiresIPhoneOS: true
+        UILaunchScreen: {}
+        UIRequiredDeviceCapabilities:
+          - arkit
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIApplicationSupportsIndirectInputEvents: true
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        NSCameraUsageDescription: "Calorie Lens uses the camera to see your meal and estimate its size. / Calorie Lens 使用相機辨識餐點並估算份量。"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.calorielens.app
+        PRODUCT_NAME: CalorieLens
+        TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ENABLE_PREVIEWS: "NO"
+        DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+schemes:
+  CalorieLens:
+    build:
+      targets:
+        CalorieLens: all
+    run:
+      config: Debug
+    archive:
+      config: Release

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+data/sources/
+*.pt
+*.mlpackage/
+__pycache__/
+.venv/
+build/
+*.ipa
+# meal photos and datasets never go in git
+dataset/
+dumps/

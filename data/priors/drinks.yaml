@@ -1,0 +1,59 @@
+# Drink priors. Model: kcal = total_sugar_g(level, size) * 4 + base_kcal + toppings_kcal  (all per 700 mL, scale linearly by size).
+#
+# VERIFIED against the MOHW PDF (data/sources/priors_mohw_sugar.pdf, downloaded from
+# https://mohw.gov.tw/dl-38434-1f700ea4-1843-4a74-a23c-91b98158d2b0.html, file is 5-page PDF, page 5 "附件4、市售現調飲料(手搖飲)之糖含量及熱量").
+# That page cites TFDA food-composition DB (consumer.fda.gov.tw/Food/TFND.aspx?nodeID=178) as its basis.
+version: 1
+mohw_table_700ml:   # copied verbatim from page 5, 700 mL
+  source: "MOHW 附件4 p.5 of priors_mohw_sugar.pdf"
+  bubble_milk_tea:      # 珍珠奶茶
+    full:  {sugar_g: 61.6, kcal: 658}
+    half:  {sugar_g: 44.8, kcal: 588}
+    light: {sugar_g: 39.2, kcal: 525}      # 微糖
+  oolong_tea: {full: {sugar_g: 57.4, kcal: 252}, half: {sugar_g: 34.3, kcal: 147}, light: {sugar_g: 25.2, kcal: 112}}
+  green_tea_yakult: {full: {sugar_g: 71.4, kcal: 343}}   # 多多綠茶
+  verified: "61.6 / 44.8 / 39.2 g CONFIRMED for 珍珠奶茶 全糖/半糖/微糖."
+  derived: "kcal minus 4*sugar_g = 411.6 (full), 408.8 (half), 368.2 (light): the non-sugar part (tea, milk/creamer, pearls) is ~370-410 kcal."
+
+full_sugar_g_per_700ml: {min: 50.0, typ: 61.6, max: 75.0}
+# typ = MOHW. min/max reflect shop variation: 50嵐 large (~720 mL) 62.5 g (secondary source, cw.com.tw/article/5127474, low confidence);
+# other chain tables range ~52-62 g for pearl milk tea (same source). Max is judgement.
+
+# Fraction of the FULL total-sugar figure at each sweetness level. These are EMPIRICAL TOTAL-sugar ratios, not menu percentages.
+# Why: MOHW half = 44.8/61.6 = 0.727 and light = 39.2/61.6 = 0.636, not 0.5 / 0.3, because ~28 g of the 61.6 g is not removable
+# by the sweetness setting (sugar in syrup-soaked pearls, creamer/milk lactose). A linear fit through full and half gives
+# total = 28.0 + 33.6 * menu_fraction, i.e. none -> 28/61.6 = 0.455 (extrapolation, no MOHW datapoint for 無糖).
+# Because the totals already include the intrinsic sugar, base+toppings below EXCLUDE sugar kcal (they are the MOHW residual).
+sugar_levels:
+  full:  1.00     # 全糖 (MOHW)
+  less:  0.84     # 少糖 / 七分糖 interpolated on the linear fit: (28 + 33.6*0.7)/61.6
+  half:  0.727    # 半糖 (MOHW 44.8/61.6)
+  light: 0.636    # 微糖 (MOHW 39.2/61.6)
+  none:  0.455    # 無糖: fit extrapolation 28/61.6; plausible range 0.30-0.50 (low confidence)
+sugar_levels_range:
+  less:  {min: 0.75, typ: 0.84, max: 0.95}
+  half:  {min: 0.60, typ: 0.727, max: 0.95}
+  light: {min: 0.45, typ: 0.636, max: 0.80}
+  none:  {min: 0.20, typ: 0.455, max: 0.55}
+sugar_levels_note: |
+  董氏基金會 (John Tung Foundation) repeatedly found that stated 半糖 drinks are often much sweeter: one report (PTS news,
+  https://news.pts.org.tw/article/238135, year not confirmed) says over 60% of drinks claiming 半糖 were actually 7-8 分糖 and
+  16% of 232 sampled 半糖 teas had the same kcal as 全糖; another (UDN, https://health.udn.com/health/story/6037/2676720) quotes
+  the foundation director saying shops' 半糖 and 全糖 taste "about as sweet". Hence half's max is widened to 0.95 and the
+  MOHW 0.727 (itself a "7.3 分") is used as typ rather than 0.5. Since 2021-01-01 TFDA requires chain shops to label total sugar and kcal
+  (Taiwan News, https://www.taiwannews.com.tw/zh/news/4023689); use those labels when available.
+
+drinks:
+  bubble_milk_tea:
+    zh: 珍珠奶茶
+    # Residual from MOHW minus 4*sugar: full 411.6, half 408.8, light 368.2 -> base+toppings typ ~405, 90% span 330-480.
+    # The SPLIT between base and toppings is NOT sourced: judgement (pearls ~60-80 g cooked starch part ~100-150 kcal, remainder milk/creamer/tea).
+    base_kcal_per_700ml: {min: 240, typ: 285, max: 340}      # tea + milk/non-dairy creamer fat, excludes sugar and pearls
+    toppings_kcal:       {min: 60,  typ: 120, max: 190}      # tapioca pearls, excluding their sugar (sugar counted in sugar_levels)
+    source:
+      - "Sum constrained by MOHW page 5 (see mohw_table_700ml): 658/588/525 kcal minus 4 kcal/g of listed sugar."
+      - "Split: judgement. No chain-shop table was fetched; 50嵐 large cup secondary figures 668-783 kcal full-sugar (cw.com.tw/article/5127474, TVBS supertaste 345348) are HIGHER than MOHW's 658, so max is allowed up to the 783 case."
+      - "Label gap: shop labels often exclude toppings; 董氏基金會 2019 found label vs actual kcal differences up to ~7x with toppings (PTS news 433548)."
+    confidence: low
+    note: "kcal for 全糖 at typ: 61.6*4 + 285 + 120 = 651 (MOHW 658). Hi case (75 g, 340, 190) = 830 kcal covers the 783 chain figure."
+    size_scaling: "Scale all terms by size_ml/700. A 700 mL cup contains ice; the MOHW per-700 mL basis is assumed to be drink volume incl. ice. Unverified."

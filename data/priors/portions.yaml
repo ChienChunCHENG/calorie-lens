@@ -1,0 +1,83 @@
+# Default portion priors in Taiwanese serving context. default_portion_g = mass of the item AS SERVED (bone-in pieces include bone,
+# soup includes broth). bubble_milk_tea is in grams ~ mL of liquid (ice displaces some; a 700 mL cup holds ~450-550 mL liquid).
+# Sources: 國健署 食物代換表 / 每日飲食指南 (https://www.hpa.gov.tw ; MOHW https://mohw.gov.tw/cp-16-36898-1.html) for exchange sizes
+# that I RECALL (not re-fetched this session): 1 碗 cooked rice = 200 g (1 份 = 1/4 碗 = 50 g), 1 egg = 1 份 protein (~55 g with shell),
+# 1 份 cooked vegetables = ~100 g. Stall/restaurant portion sizes are my estimates from common Taiwanese servings; no published
+# Taiwan portion survey was found. All typ values are judgement unless a note says otherwise.
+version: 1
+portions:
+  rice_white:
+    default_portion_g: {min: 140, typ: 210, max: 280}
+    container_prior: [bowl_small, bento_box, bowl_large]
+    source: ["食物代換表: 1 碗 = ~200 g cooked rice (recalled); 便當 rice 200-250 g; min = 小碗 (~0.7 碗)"]
+    confidence: med
+  lu_rou_fan:
+    default_portion_g: {min: 180, typ: 280, max: 420}
+    container_prior: [bowl_small, bowl_large]
+    source: ["小吃 小碗 ~200-250 g, 大碗 ~350-400 g (estimate: ~180-200 g rice + 50-80 g topping)"]
+    confidence: low
+  chicken_leg:
+    default_portion_g: {min: 110, typ: 180, max: 300}
+    container_prior: [bento_box, plate_26cm]
+    source: ["Fried 棒棒腿 with bone ~110-180 g; 便當 boneless 雞腿排 200-300 g (estimate)"]
+    confidence: low
+  pork_chop:
+    default_portion_g: {min: 90, typ: 140, max: 230}
+    container_prior: [bento_box, plate_26cm]
+    source: ["排骨便當 piece ~100-180 g fried incl. bone (estimate)"]
+    confidence: low
+  braised_egg:
+    default_portion_g: {min: 45, typ: 55, max: 70}
+    container_prior: [bento_box, bowl_small, plate_26cm]
+    source: ["Egg ~55-60 g with shell, 50 g edible; 食物代換表 1 egg = 1 份 (recalled)"]
+    confidence: high
+  fried_egg:
+    default_portion_g: {min: 40, typ: 55, max: 85}
+    container_prior: [bento_box, plate_26cm]
+    source: ["1 egg ~50 g plus pan oil; some vendors fry 2 eggs (max)"]
+    confidence: med
+  stirfried_greens:
+    default_portion_g: {min: 60, typ: 110, max: 220}
+    container_prior: [bento_box, plate_26cm]
+    source: ["食物代換表 1 份 cooked vegetables ~100 g (recalled); 便當 side ~70-110 g; 小吃 plate 150-250 g"]
+    confidence: low
+  braised_tofu:
+    default_portion_g: {min: 50, typ: 90, max: 170}
+    container_prior: [bento_box, bowl_small, plate_26cm]
+    source: ["食物代換表 traditional tofu 1 份 ~80 g, boxed tofu ~1/2 box 140 g (recalled)"]
+    confidence: low
+  beef_noodle_soup:
+    default_portion_g: {min: 550, typ: 750, max: 1000}
+    container_prior: [bowl_large]
+    source: ["Whole bowl incl. broth: small ~500-600 g, regular ~750-900 g, large up to ~1000 g (estimate)"]
+    confidence: low
+  boiled_dumplings:
+    default_portion_g: {min: 150, typ: 250, max: 400}
+    container_prior: [plate_26cm, bowl_small]
+    source: ["~10 pieces at ~22-28 g each; shops sell 8-15 pieces (estimate)"]
+    confidence: low
+  potstickers:
+    default_portion_g: {min: 150, typ: 250, max: 400}
+    container_prior: [plate_26cm]
+    source: ["~8-10 pieces at ~25-30 g; sold per piece or per 10 (estimate)"]
+    confidence: low
+  scallion_pancake:
+    default_portion_g: {min: 80, typ: 130, max: 210}
+    container_prior: [plate_26cm]
+    source: ["Street 1 piece ~100-150 g; egg-added or large ~180-200 g (estimate)"]
+    confidence: low
+  fried_chicken_cutlet:
+    default_portion_g: {min: 180, typ: 250, max: 350}
+    container_prior: [plate_26cm]
+    source: ["1 雞排 ~200-300 g as stated by project owner; large-size stalls to ~350 g"]
+    confidence: med
+  popcorn_chicken:
+    default_portion_g: {min: 80, typ: 150, max: 300}
+    container_prior: [plate_26cm]
+    source: ["Bag sizes 小 ~100 g to 大 ~250+ g typical (estimate, vendor-dependent)"]
+    confidence: low
+  bubble_milk_tea:
+    default_portion_g: {min: 450, typ: 650, max: 750}
+    container_prior: [cup_700, cup_500]
+    source: ["大杯 700 mL / 中杯 500 mL; liquid ~ mL x 1.0 g/mL; ice displaces part. MOHW table uses 700 mL"]
+    confidence: med
