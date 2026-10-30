@@ -54,3 +54,18 @@ Label in {bubble_milk_tea, container_cup, black_tea, green_tea, soy_milk} or con
 - D5 The plate/box container only adds a note; no rim-based model yet.
 - D6 Footprint parameters (FP_SAT 0.5, HULL_VOTE 0.8, FILL_ITERS 12) were tuned on the synth bench to remove the bias with exact depth. Under strong i.i.d. 5 mm pixel noise (test_box_noisy_interval) the box measures about +8 % (was +4 %): smear cells at full wall height enter the footprint. Raising FP_FLOOR to 0.3-0.4 fixes that case but costs the mound -6 %; revisit with real data.
 - D7 Interval unchanged (bootstrap + 6 % scale term + container term); it still achieved 97-100 % coverage on the synth bench with mean max/min of 1.44-1.51, so no recalibration was made. The bias remaining from alignment lies inside it.
+
+## Alignment (align.py)
+Diagnosis of the aligned-depth bias (meal rice -8.1 %, egg -9.7 % before; exact depth -3..+1 %), synthetic, per-frame statistics:
+- Regression dilution is real but small: fitted/true slope = 0.99 (rel noise variance is about 0.4 % of the anchor rel variance), worth about 0.15 mm at 0.5 m. Reverse regression / Deming (delta = var(err 1/d)/var(err rel)) moved the food-minus-table bias by only 0.1-0.3 mm, and an oracle fit on all pixels shows the same bias.
+- Anchor conditioning is fine: table anchors span 1/d = 1.5-3.6 (single item, p5-p95; 1.5-2.6 for the meal), the food top is only 0.15-0.25 1/m from the table mean. The slope is not the problem; 10-20 % of table anchors are never near food.
+- The actual cause is edge bleed: simulated (and real) depth models blend food borders with a blurred neighbourhood, so food pixels within about 2 px of the mask border read 2-3 mm too far (about 35 % of an egg's pixels). No affine fit can undo that. Interior food pixels are within 0.0-0.5 mm.
+- Per-frame food bias has sd about 3 mm (pose noise 2 mm + smooth warp), so a 10-seed mean of one item has a standard error of about 0.3 mm; bench biases of 3 % on a 1 cm egg are partly sampling noise.
+
+Fixes, in order of effect:
+1. `fix_mask_edges`: the outer `EDGE_RING_PX` = 2 px of every non-container mask get their rel replaced by a local weighted-plane extrapolation of the mask interior (Gaussian-normalised moments, sigma 3 px, slope ridge 0.5). Food-pixel depth bias +1.1 -> about +0.1 mm. Ring 3 over-corrects (-0.9 mm) and inflates cutlets/mounds.
+2. Deming fit (`DEMING_DELTA` = 0.01, closed form, replaces OLS in the RANSAC refinement). Hypothesis (a)/(b) is a minor improvement only (0.1-0.2 mm).
+3. `_local_offset`: smooth additive 1/d offset from inlier residuals (Gaussian kernel 30 px, ridge 5), absorbing the slow non-affine warp near the item. Small effect on the mean, no effect on the per-frame spread.
+RANSAC, inlier tests in metric depth and all rejection gates are unchanged; everything is closed-form numpy (Swift-portable). `bench_volume.py --exact-depth` prints exact-vs-aligned bias side by side.
+
+Residual: the rice-in-meal / egg-in-meal bias (-5.9 / -5.7 %) is at the limit of what the rel noise allows (oracle bg-only affine fit with true plane and pose gives -4.7 / -5.1 %). Cutlet alone (+7.9 %) is volume.py's noise response (exact depth +2 %, any oracle alignment +8 %); raising the edge ring cures egg/rice but worsens cutlets, so the trade-off is left at ring 2.

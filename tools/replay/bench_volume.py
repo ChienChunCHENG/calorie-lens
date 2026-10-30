@@ -118,8 +118,20 @@ def main(argv=None):
     ap.add_argument("--kinds", default=",".join(KINDS))
     ap.add_argument("--true-depth", action="store_true", help="use exact synth depth + pose + plane (algorithm only)")
     ap.add_argument("--true-plane", action="store_true")
+    ap.add_argument("--exact-depth", action="store_true",
+                    help="comparison only: bias/coverage with exact synth depth vs aligned depth, side by side (no file written)")
     ap.add_argument("--out", default=os.path.join(HERE, "bench_results.json"))
     args = ap.parse_args(argv)
+    if args.exact_depth:
+        ks, sd = args.kinds.split(","), range(1, args.seeds + 1)
+        ex = summarize(bench(ks, sd, True, True))
+        al = summarize(bench(ks, sd, False, args.true_plane))
+        print(f"{'scene/item':<30}{'exact%':>8}{'aligned%':>10}{'diff':>7}{'cov_ex':>8}{'cov_al':>8}")
+        for k in ex:
+            a = al.get(k, {"bias_pct": float('nan'), "coverage_pct": float('nan')})
+            print(f"{k:<30}{ex[k]['bias_pct']:>+8.1f}{a['bias_pct']:>+10.1f}{a['bias_pct'] - ex[k]['bias_pct']:>+7.1f}"
+                  f"{ex[k]['coverage_pct']:>8.0f}{a['coverage_pct']:>8.0f}")
+        return 0
     rows = bench(args.kinds.split(","), range(1, args.seeds + 1), args.true_depth, args.true_plane)
     summ = summarize(rows)
     print_table(summ)

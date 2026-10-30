@@ -47,6 +47,26 @@ class TestAlign(unittest.TestCase):
         self.assertLess(np.median(e), 0.01)
         self.assertLess(np.median(ef), 0.01)
 
+    def test_food_pixel_depth_bias(self):
+        """Signed depth error on food pixels (mask edges included) stays under 0.3 mm on average over 3 seeds."""
+        biases = []
+        for kind in ("meal", "rice_mound", "fried_egg"):
+            per_seed = []
+            for seed in (21, 22, 23):
+                frames, gt = synth.make_scene(kind, seed)
+                align.align_frames(frames, plane_hint=gt["plane"])
+                for f, dt in zip(frames, gt["depth_true"]):
+                    if f.depth_m is None:
+                        continue
+                    fg = np.zeros(dt.shape, bool)
+                    for k, m in f.masks.items():
+                        if k not in gt["container_keys"]:
+                            fg |= m
+                    ok = fg & np.isfinite(f.depth_m)
+                    per_seed.append(float((f.depth_m - dt)[ok].mean()))
+            biases.append(np.mean(per_seed))
+        self.assertLess(abs(float(np.mean(biases))), 0.0003, f"food bias {np.mean(biases) * 1000:.2f} mm ({biases})")
+
     def test_feature_points_only_when_table_hidden(self):
         """Masks covering most of the image: still fits using feature points + remaining table."""
         frames, gt = synth.make_scene("rice_mound", 13)
