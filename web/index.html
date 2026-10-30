@@ -5,27 +5,74 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Calorie Lens</title>
 <style>
-  html,body{margin:0;height:100%;background:#000;color:#fff;font:14px -apple-system,system-ui,sans-serif;overflow:hidden}
-  #stage{position:fixed;inset:0}
+  html,body{margin:0;height:100%;background:#000;color:#fff;font:14px -apple-system,system-ui,"PingFang TC",sans-serif;overflow:hidden;overscroll-behavior:none}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  #stage{position:fixed;inset:0;overflow:hidden}
   video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
   canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-  #hud{position:absolute;top:env(safe-area-inset-top,0);left:0;right:0;padding:6px 10px;font:11px ui-monospace,Menlo,monospace;background:rgba(0,0,0,.45);white-space:pre-wrap}
-  #ctl{position:absolute;bottom:env(safe-area-inset-bottom,0);left:0;right:0;padding:12px;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap}
-  button,select{font:inherit;padding:10px 16px;border-radius:10px;border:0;background:#2ecc71;color:#000;font-weight:600}
+  button,select{font:inherit;touch-action:manipulation}
+  button.btn,select{min-height:44px;padding:0 16px;border-radius:12px;border:0;background:#2ecc71;color:#000;font-weight:600}
+  button.btn.ghost{background:rgba(255,255,255,.14);color:#fff}
   select{background:#fff}
-  #msg{position:absolute;left:12px;right:12px;top:50%;transform:translateY(-50%);text-align:center;font-size:16px;color:#ffd166}
+  #msg{position:absolute;left:12px;right:12px;top:40%;text-align:center;font-size:16px;color:#ffd166;pointer-events:none}
+  #start{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);min-width:180px;min-height:52px;font-size:17px}
+
+  /* HUD: corner pill, tap to expand */
+  #hudwrap{position:absolute;top:calc(env(safe-area-inset-top,0px) + 6px);left:max(8px,env(safe-area-inset-left,0px));max-width:calc(100% - 16px)}
+  #hudpill{min-height:44px;min-width:44px;padding:0 12px;border-radius:22px;border:0;background:rgba(0,0,0,.5);color:#cfd;font:11px ui-monospace,Menlo,monospace}
+  #hudpanel{display:none;margin-top:6px;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.65)}
+  #hudwrap.open #hudpanel{display:block}
+  #hud{font:11px ui-monospace,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:8px}
+
+  /* bottom meal bar */
+  #bar{position:absolute;left:0;right:0;bottom:0;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 8px) max(12px,env(safe-area-inset-left,0px));background:rgba(0,0,0,.62);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  #barrow{display:flex;align-items:center;gap:8px}
+  #total{flex:1;min-width:0}
+  #total .big{font-size:20px;font-weight:700;line-height:1.2}
+  #total .sub{font-size:12px;opacity:.7}
+  #bar .btn{padding:0 12px;font-size:13px;flex:none}
+  #bar .btn.on{background:#ffd166;color:#000}
+  #disc{margin-top:4px;font-size:11px;opacity:.55;text-align:center}
+
+  /* bottom sheet */
+  #backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s}
+  #backdrop.open{opacity:1;pointer-events:auto}
+  #sheet{position:absolute;left:0;right:0;bottom:0;max-height:72%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#1c1c1e;border-radius:18px 18px 0 0;padding:14px max(14px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(14px,env(safe-area-inset-left,0px));transform:translateY(105%);transition:transform .22s ease;visibility:hidden}
+  #sheet.open{transform:none;visibility:visible}
+  #sheet .head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+  #sheet .ttl{font-size:16px;font-weight:700}
+  #sheet .sec{margin:12px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;opacity:.55}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{min-height:44px;min-width:44px;padding:4px 12px;border-radius:12px;border:2px solid transparent;background:#2c2c2e;color:#fff;text-align:left;display:flex;flex-direction:column;justify-content:center}
+  .chip .zh{font-size:17px;font-weight:600;line-height:1.2}
+  .chip .en{font-size:11px;opacity:.6;line-height:1.2}
+  .chip.on{border-color:#2ecc71;background:#1f3d2b}
+  #sheet > .btn{margin-top:16px;width:100%}
 </style>
 </head>
 <body>
 <div id="stage">
   <video id="video" playsinline muted autoplay></video>
   <canvas id="overlay"></canvas>
-  <div id="hud">HUD</div>
-  <div id="msg"></div>
-  <div id="ctl">
-    <button id="start">Start camera</button>
-    <select id="backend"><option value="webgpu">webgpu (fallback wasm)</option><option value="wasm">wasm</option></select>
+  <div id="hudwrap">
+    <button id="hudpill" type="button">HUD</button>
+    <div id="hudpanel">
+      <div id="hud">HUD</div>
+      <select id="backend"><option value="webgpu">webgpu (fallback wasm)</option><option value="wasm">wasm</option></select>
+    </div>
   </div>
+  <div id="msg"></div>
+  <button id="start" class="btn" type="button">Start camera</button>
+  <div id="bar">
+    <div id="barrow">
+      <div id="total"><div class="big">Tap a box to identify</div><div class="sub"></div></div>
+      <button id="nonum" class="btn ghost" type="button">Hide kcal</button>
+      <button id="clear" class="btn ghost" type="button">Clear meal</button>
+    </div>
+    <div id="disc">Estimates only, not medical advice.</div>
+  </div>
+  <div id="backdrop"></div>
+  <div id="sheet"></div>
 </div>
 <script type="module" src="/src/main.ts"></script>
 </body>

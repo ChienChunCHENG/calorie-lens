@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --experimental-strip-types --test src/meal.test.ts",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "predev": "node scripts/copy-ort.mjs",
+    "predev": "node scripts/gen-labels.mjs && node scripts/copy-ort.mjs",
     "preview": "vite preview",
-    "check:model": "node scripts/check-model.mjs"
+    "check:model": "node scripts/check-model.mjs",
+    "prebuild": "node scripts/gen-labels.mjs"
   },
   "keywords": [],
   "author": "",

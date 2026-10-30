@@ -8,12 +8,12 @@ version: 1
 portions:
   rice_white:
     default_portion_g: {min: 140, typ: 210, max: 280}
-    container_prior: [bowl_small, bento_box, bowl_large]
+    container_prior: [bowl_small, bowl_medium, bento_box]
     source: ["食物代換表: 1 碗 = ~200 g cooked rice (recalled); 便當 rice 200-250 g; min = 小碗 (~0.7 碗)"]
     confidence: med
   lu_rou_fan:
     default_portion_g: {min: 180, typ: 280, max: 420}
-    container_prior: [bowl_small, bowl_large]
+    container_prior: [bowl_small, bowl_medium]
     source: ["小吃 小碗 ~200-250 g, 大碗 ~350-400 g (estimate: ~180-200 g rice + 50-80 g topping)"]
     confidence: low
   chicken_leg:

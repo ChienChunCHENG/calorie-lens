@@ -1,3 +1,7 @@
 CalorieLens.xcodeproj/
 Info.plist
 build/
+
+# Core ML models are fetched by scripts/fetch_models.sh, never committed
+Sources/CalorieLens/Resources/Models/
+*.mlpackage/

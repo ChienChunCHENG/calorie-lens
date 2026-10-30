@@ -31,6 +31,18 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
+      - name: Cache Core ML models
+        uses: actions/cache@v4
+        with:
+          path: ios/Sources/CalorieLens/Resources/Models
+          key: coreml-models-${{ hashFiles('ios/scripts/fetch_models.sh') }}-${{ vars.DETECTOR_URL != '' }}
+
+      - name: Fetch Core ML models
+        shell: bash
+        env:
+          DETECTOR_URL: ${{ vars.DETECTOR_URL }}
+        run: bash ios/scripts/fetch_models.sh
+
       - name: Generate project
         run: cd ios && xcodegen generate
 

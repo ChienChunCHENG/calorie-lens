@@ -36,7 +36,7 @@ Every uncertain number is written `{min, typ, max}`, with `min ≤ typ ≤ max`.
 | `data/priors/density.yaml` | priors agent | Per solid id: `density_g_ml{min,typ,max}, bulk:bool, source[], confidence` |
 | `data/priors/oil.yaml` | priors agent | `methods: {stir_fry, deep_fry_breaded, pan_fry, braise, boil, steam, none}` → `oil_g_per_100g{min,max}`, plus `dish_method: {id: method}` |
 | `data/priors/portions.yaml` | priors agent | Per id: `default_portion_g{min,typ,max}, container_prior[]` |
-| `data/priors/containers.yaml` | priors agent | Container id → `capacity_ml{min,typ,max}, rim_diameter_cm, depth_cm, shape(bowl/plate/box/cup)`. Ids: `bowl_small, bowl_large, bento_box, plate_26cm, cup_500, cup_700` |
+| `data/priors/containers.yaml` | priors agent | Container id → `capacity_ml{min,typ,max}, rim_diameter_cm, depth_cm, shape(bowl/plate/box/cup)`. Ids: `bowl_small, bowl_medium (QC add: 大碗飯), bowl_large (noodle bowl), bento_box, plate_26cm, cup_500, cup_700` |
 | `data/priors/drinks.yaml` | priors agent | `sugar_levels: {full, less, half, light, none}` → fraction of full, plus `full_sugar_g_per_700ml`. Per drink id: `base_kcal_per_700ml{min,typ,max}, toppings_kcal{min,typ,max}`. Also cites the MOHW table. |
 | `data/build_nutrition.py` + `data/nutrition.json` | nutrition agent | Merges dishes and priors into the per-dish schema in PLAN.md §5, plus top-level `containers` and `drinks` |
 | `spec/range_engine.md`, `spec/vectors.json` | range-engine agent | Math spec and golden vectors (self-contained fake inputs, not tied to real data) |

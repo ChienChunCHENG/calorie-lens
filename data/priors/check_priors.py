@@ -9,7 +9,7 @@ IDS = ["rice_white", "lu_rou_fan", "chicken_leg", "pork_chop", "braised_egg", "f
        "braised_tofu", "beef_noodle_soup", "boiled_dumplings", "potstickers", "scallion_pancake",
        "fried_chicken_cutlet", "popcorn_chicken", "bubble_milk_tea"]
 METHODS = ["stir_fry", "deep_fry_breaded", "pan_fry", "braise", "boil", "steam", "none"]
-CONTAINERS = ["bowl_small", "bowl_large", "bento_box", "plate_26cm", "cup_500", "cup_700"]
+CONTAINERS = ["bowl_small", "bowl_medium", "bowl_large", "bento_box", "plate_26cm", "cup_500", "cup_700"]
 errs = []
 
 

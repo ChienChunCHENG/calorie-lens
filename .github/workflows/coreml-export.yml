@@ -1,0 +1,89 @@
+name: Core ML export
+
+on:
+  workflow_dispatch:
+    inputs:
+      weights_url:
+        description: "URL of a best.pt (release asset or direct link). Empty = stock yolo11n-seg.pt (COCO)."
+        required: false
+        default: ""
+      imgsz:
+        description: "Export image size"
+        required: false
+        default: "640"
+      task:
+        description: "seg or detect"
+        required: false
+        default: "seg"
+        type: choice
+        options: [seg, detect]
+
+jobs:
+  export:
+    runs-on: macos-26
+    timeout-minutes: 40
+    env:
+      WEIGHTS_URL: ${{ inputs.weights_url }}
+      IMGSZ: ${{ inputs.imgsz }}
+      TASK: ${{ inputs.task }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install (pinned)
+        run: |
+          python -m pip install --upgrade pip
+          # torch 2.7.0 is the newest torch that coremltools 9.0 is tested against.
+          python -m pip install "torch==2.7.0" "torchvision==0.22.0" \
+            "ultralytics==8.4.186" "coremltools==9.0" "numpy<=2.3.5"
+          python -m pip freeze | grep -i -E "^(torch|torchvision|ultralytics|coremltools|numpy)=="
+
+      - name: Select weights
+        run: |
+          mkdir -p work out
+          if [ -n "$WEIGHTS_URL" ]; then
+            curl -fL --retry 3 -sS -o work/best.pt "$WEIGHTS_URL"
+            echo "WEIGHTS_FILE=best.pt" >> "$GITHUB_ENV"
+          elif [ "$TASK" = "detect" ]; then
+            echo "WEIGHTS_FILE=yolo11n.pt" >> "$GITHUB_ENV"
+          else
+            echo "WEIGHTS_FILE=yolo11n-seg.pt" >> "$GITHUB_ENV"
+          fi
+
+      - name: Export Core ML (nms=True, fp16)
+        run: |
+          cd work
+          # Stock weights are auto-downloaded into work/. quantize=16 is fp16 in 8.4.x.
+          yolo export model="$WEIGHTS_FILE" format=coreml nms=True quantize=16 imgsz="$IMGSZ"
+          ls -la
+
+      - name: Collect output
+        run: |
+          PKG=$(find work -maxdepth 1 -type d -name '*.mlpackage' | head -n 1)
+          test -n "$PKG"
+          echo "Found $PKG"
+          cp -R "$PKG" out/CalorieLensDetector.mlpackage
+          du -sh out/CalorieLensDetector.mlpackage
+
+      - name: Inspect model spec
+        run: python ios/scripts/inspect_model.py out/CalorieLensDetector.mlpackage out/model_spec.txt
+
+      - name: Labels json
+        run: |
+          python ios/scripts/export_labels.py "work/$WEIGHTS_FILE" "$TASK" "$IMGSZ" out/labels.json
+          head -n 12 out/labels.json
+
+      - name: Validate with Ultralytics predict
+        run: |
+          python ios/scripts/validate_model.py out/CalorieLensDetector.mlpackage "$TASK" "$IMGSZ" \
+            https://ultralytics.com/images/bus.jpg | tee out/validation.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CalorieLensDetector
+          path: out/
+          retention-days: 30
+          if-no-files-found: error

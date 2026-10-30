@@ -14,6 +14,14 @@ containers:
     depth_cm: {min: 5.0, typ: 6.0, max: 7.0}
     source: ["Typical Taiwanese 飯碗 / 4.5 inch rice bowl (general knowledge, unverified)"]
     confidence: low
+  bowl_medium:
+    shape: bowl
+    zh: "大碗飯 (5-5.5 吋)"
+    capacity_ml: {min: 380, typ: 450, max: 550}
+    rim_diameter_cm: {min: 12.5, typ: 13.5, max: 14.5}
+    depth_cm: {min: 6.0, typ: 6.5, max: 7.5}
+    source: ["QC (Opus): large rice bowl for 大碗白飯/大碗滷肉飯; bowl_large is a noodle bowl and overstates rice ~3x (general knowledge, unverified)"]
+    confidence: low
   bowl_large:
     shape: bowl
     zh: "麵碗 / 湯碗 (6-7 吋)"

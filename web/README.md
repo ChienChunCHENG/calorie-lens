@@ -14,6 +14,17 @@ No `/models/detector.onnx` means camera-only mode. Class names come from `/model
 
 The HUD shows the backend in use, median inference ms (last 20), effective Hz, JS heap (Chrome only; n/a on Safari), and elapsed time for the 5-minute soak test.
 
+## How to play
+
+1. Run `npm run dev -- --host`, open the HTTPS tunnel URL in Safari on the iPhone, tap **Start camera**.
+2. Point at the food. Boxes appear on detected items (the COCO model only knows cup, bowl, etc.; a custom model with dish-id labels auto-assigns).
+3. Tap a box. Pick the dish in the bottom sheet (cups and bottles show the drink list; bowls preselect a bowl container).
+4. Check the container chip (preselected from the dish prior), or choose "不確定" for a default portion. For milk tea set cup size, sugar (default 半糖) and ice.
+5. The label above the box shows the calorie range; the bottom bar shows the meal total. Labels stay on the item for about 1.5 s if tracking drops.
+6. **Hide kcal** shows names only; **Clear meal** resets. Tap the HUD pill (top left) for timing and the backend switch. Estimates only, not medical advice.
+
+`npm test` runs the meal-logic tests (`node --experimental-strip-types`). `npm run dev`/`build` first generate `src/generated/labels.json` from `ml/labels.yaml` (`scripts/gen-labels.mjs`).
+
 ## Testing on an iPhone from Windows
 
 `getUserMedia` requires HTTPS (localhost is exempt, the phone is not).

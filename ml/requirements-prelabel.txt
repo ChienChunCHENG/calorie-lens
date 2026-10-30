@@ -1,0 +1,5 @@
+# Labelling aids only (prelabel.py + xanylabeling/prep_photos.py). Not used by the app or training.
+# Versions verified to exist on PyPI (2026-10-30). Python 3.11+.
+anthropic==2.3.0
+pillow==12.3.0
+pillow-heif==1.8.1

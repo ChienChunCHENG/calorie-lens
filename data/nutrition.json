@@ -33,8 +33,8 @@
    },
    "container_prior": [
     "bowl_small",
-    "bento_box",
-    "bowl_large"
+    "bowl_medium",
+    "bento_box"
    ],
    "tfda_refs": [
     "A0550601"
@@ -82,7 +82,7 @@
    },
    "container_prior": [
     "bowl_small",
-    "bowl_large"
+    "bowl_medium"
    ],
    "tfda_refs": [
     "A0550601",
@@ -765,6 +765,29 @@
    },
    "source": [
     "Typical Taiwanese 飯碗 / 4.5 inch rice bowl (general knowledge, unverified)"
+   ],
+   "confidence": "low"
+  },
+  "bowl_medium": {
+   "shape": "bowl",
+   "zh": "大碗飯 (5-5.5 吋)",
+   "capacity_ml": {
+    "min": 380,
+    "typ": 450,
+    "max": 550
+   },
+   "rim_diameter_cm": {
+    "min": 12.5,
+    "typ": 13.5,
+    "max": 14.5
+   },
+   "depth_cm": {
+    "min": 6.0,
+    "typ": 6.5,
+    "max": 7.5
+   },
+   "source": [
+    "QC (Opus): large rice bowl for 大碗白飯/大碗滷肉飯; bowl_large is a noodle bowl and overstates rice ~3x (general knowledge, unverified)"
    ],
    "confidence": "low"
   },

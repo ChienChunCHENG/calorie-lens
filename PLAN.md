@@ -193,7 +193,7 @@ Build in this order. Each step is a sideloadable build.
 | Snacks | 蚵仔煎, 甜不辣, 臭豆腐, 滷味, 地瓜, 肉圓 |
 | Drinks and dessert | 紅茶, 綠茶, 豆漿, 豆花 |
 
-Mixed bowls such as 牛肉麵 and 滷肉飯 are **one item each**. Do not try to segment their components.
+Mixed bowls such as 牛肉麵 and 滷肉飯 are **one item each**. Do not try to segment their components. Bento compartments are the opposite: each compartment is labelled as its own dish (rice, 雞腿, 炒青菜, …). Containers (碗/盤/便當盒/杯) get their own instances, which may overlap the food masks.
 
 ---
 

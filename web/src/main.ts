@@ -1,5 +1,12 @@
 import { Detector, Backend } from './detector';
 import { IouTracker } from './tracker';
+import type { Track } from './tracker';
+import { Assignments } from './assign.ts';
+import { data, dishIds } from './data';
+import { autoDishId, defaultItem, safeEstimate, totalOf, DRINK_LABELS, BOWL_LABELS } from './meal.ts';
+import type { Item, ItemEstimate } from './meal.ts';
+import { openSheet, sugarZh } from './sheet';
+import { formatRange } from '../../core/ts/rangeEngine.ts';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const video = $<HTMLVideoElement>('video'), canvas = $<HTMLCanvasElement>('overlay');
@@ -11,6 +18,8 @@ const modelUrl = q.get('model') || `${import.meta.env.BASE_URL}models/detector.o
 const TARGET_MS = 1000 / Math.min(10, Math.max(1, parseFloat(q.get('hz') || '8') || 8));
 
 const tracker = new IouTracker();
+const assignments = new Assignments();
+let noNumbers = false;
 let detector: Detector | null = null;
 let modelStatus = 'not loaded';
 let running = false;
@@ -113,31 +122,120 @@ async function inferLoop() {
 }
 
 // ---- render loop at rAF rate, from smoothed tracks ----
+const rawLabel = (t: Track) => detector?.labels[t.cls] ?? String(t.cls);
+const autoFor = (l: string | undefined): Item | null => { const id = autoDishId(l, data); return id ? defaultItem(data, id) : null; };
+
+function estimateOf(item: Item): ItemEstimate | null { return safeEstimate(data, item); }
+const FLAG_TEXT: Record<string, string> = { portion_default: '≈ default portion', low_confidence: '± wide' };
+
+function roundRect(x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+/** Draws a label pill above (or inside, when no room above) the box; lines = [main, sub?]. */
+function drawLabel(x: number, y: number, lines: string[], bg: string, alpha: number) {
+  const mainFont = '700 15px -apple-system, system-ui, "PingFang TC", sans-serif';
+  const subFont = '500 11px -apple-system, system-ui, sans-serif';
+  ctx.font = mainFont; const w1 = ctx.measureText(lines[0]).width;
+  let w2 = 0;
+  if (lines[1]) { ctx.font = subFont; w2 = ctx.measureText(lines[1]).width; }
+  const w = Math.min(cssW - 8, Math.max(w1, w2) + 14), h = lines[1] ? 38 : 24;
+  const lx = Math.max(4, Math.min(x, cssW - w - 4));
+  const ly = y - h - 2 < 4 ? y + 2 : y - h - 2;
+  ctx.globalAlpha = alpha; ctx.fillStyle = bg; roundRect(lx, ly, w, h, 8); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.textBaseline = 'top';
+  ctx.font = mainFont; ctx.fillText(lines[0], lx + 7, ly + 4, w - 10);
+  if (lines[1]) { ctx.font = subFont; ctx.globalAlpha = alpha * 0.8; ctx.fillText(lines[1], lx + 7, ly + 22, w - 10); }
+  ctx.globalAlpha = 1;
+}
+
+function itemLines(item: Item): string[] {
+  const dish = data.dishes[item.dishId];
+  const est = noNumbers ? null : estimateOf(item);
+  const main = est ? `${dish.zh} ${formatRange(est.lo, est.hi)} kcal` : dish.zh;
+  if (!est) return [main];
+  const sub: string[] = [];
+  if (dish.kind === 'drink') sub.push(sugarZh(item.sugar));
+  for (const f of est.flags) if (FLAG_TEXT[f]) sub.push(FLAG_TEXT[f]);
+  return sub.length ? [main, sub.join(' · ')] : [main];
+}
+
 let last = performance.now();
 function render(now: number) {
   const dt = now - last; last = now;
   tracker.step(dt);
+  const vis = tracker.visible();
+  assignments.sync(vis.map(t => ({ id: t.id, box: t.target, label: rawLabel(t) })), now, autoFor);
   ctx.clearRect(0, 0, cssW, cssH);
   const { s, ox, oy } = mapping();
-  ctx.lineWidth = 2; ctx.font = '600 14px -apple-system, system-ui, sans-serif'; ctx.textBaseline = 'top';
-  const labels = detector?.labels;
-  for (const t of tracker.visible()) {
+  ctx.lineWidth = 2;
+  for (const t of vis) {
     const x = t.x1 * s + ox, y = t.y1 * s + oy, w = (t.x2 - t.x1) * s, h = (t.y2 - t.y1) * s;
-    const hue = (t.cls * 47) % 360;
-    ctx.strokeStyle = `hsl(${hue} 90% 55%)`;
-    ctx.strokeRect(x, y, w, h);
-    const text = `${labels?.[t.cls] ?? t.cls} ${(t.score * 100).toFixed(0)}%`;
-    const tw = ctx.measureText(text).width + 8;
-    const ly = y - 20 < 0 ? y : y - 20;
-    ctx.fillStyle = `hsl(${hue} 90% 35%)`;
-    ctx.fillRect(x, ly, tw, 20);
-    ctx.fillStyle = '#fff';
-    ctx.fillText(text, x + 4, ly + 3);
+    const item = assignments.get(t.id);
+    if (item) {
+      const hue = (dishIds.indexOf(item.dishId) * 41 + 120) % 360;
+      ctx.strokeStyle = `hsl(${hue} 85% 55%)`; ctx.strokeRect(x, y, w, h);
+      drawLabel(x, y, itemLines(item), `hsl(${hue} 70% 28%)`, 0.92);
+    } else {
+      ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.setLineDash([6, 5]); ctx.strokeRect(x, y, w, h); ctx.setLineDash([]);
+      drawLabel(x, y, [`${rawLabel(t)} ${(t.score * 100).toFixed(0)}% · tap to identify`], '#000', 0.35);
+    }
   }
   updateHud(now);
+  updateBar(now);
   requestAnimationFrame(render);
 }
 requestAnimationFrame(render);
+
+// ---- tap to identify ----
+video.addEventListener('click', e => {
+  const r = video.getBoundingClientRect();
+  const px = e.clientX - r.left, py = e.clientY - r.top;
+  const { s, ox, oy } = mapping();
+  let best: Track | null = null, bestA = Infinity;
+  for (const t of tracker.visible()) {
+    const x = t.x1 * s + ox, y = t.y1 * s + oy, x2 = t.x2 * s + ox, y2 = t.y2 * s + oy;
+    // generous hit area: the label above the box and a few px of slop
+    if (px < x - 6 || px > x2 + 6 || py < y - 44 || py > y2 + 6) continue;
+    const a = (x2 - x) * (y2 - y);
+    if (a < bestA) { bestA = a; best = t; }
+  }
+  if (!best) return;
+  const id = best.id, label = rawLabel(best);
+  openSheet({
+    title: label, drinkOnly: DRINK_LABELS.has(label), preferBowl: BOWL_LABELS.has(label),
+    get: () => assignments.get(id),
+    set: item => assignments.set(id, item, best!.target),
+  });
+});
+
+// ---- bottom meal bar ----
+const totalEl = $('total'), nonumBtn = $<HTMLButtonElement>('nonum'), clearBtn = $<HTMLButtonElement>('clear');
+let barAt = 0, barKey = '';
+function updateBar(now: number) {
+  if (now - barAt < 200) return;
+  barAt = now;
+  const items = assignments.activeItems();
+  const ests = items.map(estimateOf).filter((e): e is ItemEstimate => e !== null);
+  let big: string, sub: string;
+  if (!items.length) { big = 'Tap a box to identify'; sub = 'Pick a dish for each item'; }
+  else if (noNumbers || !ests.length) { big = `${items.length} item${items.length > 1 ? 's' : ''}`; sub = noNumbers ? 'kcal hidden' : ''; }
+  else {
+    const m = totalOf(ests);
+    big = `${formatRange(m.lo, m.hi)} kcal`;
+    sub = `Meal total, ${items.length} item${items.length > 1 ? 's' : ''} (median ${Math.round(m.med / 5) * 5})`;
+  }
+  const key = big + '|' + sub;
+  if (key === barKey) return;
+  barKey = key;
+  totalEl.children[0].textContent = big; totalEl.children[1].textContent = sub;
+}
+nonumBtn.addEventListener('click', () => {
+  noNumbers = !noNumbers; nonumBtn.classList.toggle('on', noNumbers); nonumBtn.textContent = noNumbers ? 'Show kcal' : 'Hide kcal'; barAt = 0;
+});
+clearBtn.addEventListener('click', () => { assignments.clear(); barAt = 0; });
+$('hudpill').addEventListener('click', () => { $('hudwrap').classList.toggle('open'); });
 
 // ---- HUD ----
 function median(a: number[]) { if (!a.length) return NaN; const b = [...a].sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; }

@@ -1,0 +1,116 @@
+[
+ {
+  "id": "rice_white",
+  "zh": "白飯",
+  "en": "Steamed white rice",
+  "type": "dish"
+ },
+ {
+  "id": "lu_rou_fan",
+  "zh": "滷肉飯",
+  "en": "Braised pork rice",
+  "type": "dish"
+ },
+ {
+  "id": "chicken_leg",
+  "zh": "雞腿",
+  "en": "Chicken drumstick",
+  "type": "dish"
+ },
+ {
+  "id": "pork_chop",
+  "zh": "排骨",
+  "en": "Pork chop",
+  "type": "dish"
+ },
+ {
+  "id": "braised_egg",
+  "zh": "滷蛋",
+  "en": "Braised egg",
+  "type": "dish"
+ },
+ {
+  "id": "fried_egg",
+  "zh": "荷包蛋",
+  "en": "Fried egg",
+  "type": "dish"
+ },
+ {
+  "id": "stirfried_greens",
+  "zh": "炒青菜",
+  "en": "Stir-fried greens",
+  "type": "dish"
+ },
+ {
+  "id": "braised_tofu",
+  "zh": "滷豆腐",
+  "en": "Braised tofu",
+  "type": "dish"
+ },
+ {
+  "id": "beef_noodle_soup",
+  "zh": "牛肉麵",
+  "en": "Beef noodle soup",
+  "type": "dish"
+ },
+ {
+  "id": "boiled_dumplings",
+  "zh": "水餃",
+  "en": "Boiled dumplings",
+  "type": "dish"
+ },
+ {
+  "id": "potstickers",
+  "zh": "鍋貼",
+  "en": "Potstickers",
+  "type": "dish"
+ },
+ {
+  "id": "scallion_pancake",
+  "zh": "蔥油餅",
+  "en": "Scallion pancake",
+  "type": "dish"
+ },
+ {
+  "id": "fried_chicken_cutlet",
+  "zh": "雞排",
+  "en": "Fried chicken cutlet",
+  "type": "dish"
+ },
+ {
+  "id": "popcorn_chicken",
+  "zh": "鹽酥雞",
+  "en": "Taiwanese popcorn chicken",
+  "type": "dish"
+ },
+ {
+  "id": "bubble_milk_tea",
+  "zh": "珍珠奶茶",
+  "en": "Bubble milk tea",
+  "type": "dish"
+ },
+ {
+  "id": "container_bowl",
+  "zh": "碗",
+  "en": "Bowl",
+  "type": "container"
+ },
+ {
+  "id": "container_plate",
+  "zh": "盤",
+  "en": "Plate",
+  "type": "container"
+ },
+ {
+  "id": "container_bento",
+  "zh": "便當盒",
+  "en": "Bento box",
+  "type": "container"
+ },
+ {
+  "id": "container_cup",
+  "zh": "杯",
+  "en": "Drink cup",
+  "type": "container"
+ }
+]

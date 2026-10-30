@@ -1,0 +1,15 @@
+# Example mapping for make_dataset_yaml.py. Copy to ml/mappings/<export-name>.yaml and edit.
+# Keys: source class NAME (as in the export's data.yaml) or integer id.
+# Values: our class id from ml/labels.yaml (or its integer index).
+# Anything not listed is dropped. NOTE: these source names are illustrative, not a real dataset.
+source: "https://universe.roboflow.com/<workspace>/<project> (version N, YOLOv8 export), licence: <fill in>"
+map:
+  rice: rice_white
+  braised_pork_rice: lu_rou_fan
+  fried_chicken: fried_chicken_cutlet
+  bubble_tea: bubble_milk_tea
+  bowl: container_bowl
+  plate: container_plate
+  bento_box: container_bento
+  cup: container_cup
+drop: [chopsticks, spoon, fork]
