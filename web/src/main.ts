@@ -3,9 +3,9 @@ import { IouTracker } from './tracker';
 import type { Track } from './tracker';
 import { Assignments } from './assign.ts';
 import { data, dishIds } from './data';
-import { autoDishId, defaultItem, safeEstimate, totalOf, DRINK_LABELS, BOWL_LABELS } from './meal.ts';
-import type { Item, ItemEstimate } from './meal.ts';
-import { openSheet, sugarZh } from './sheet';
+import { autoDishId, defaultItem, safeEstimate, totalOf, WHOLE_DISHES } from './meal.ts';
+import { suppressContained } from './yolo';
+import type { Item, ItemEstimate, SugarLevel } from './meal.ts';
 import { formatRange } from '../../core/ts/rangeEngine.ts';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -13,7 +13,7 @@ const video = $<HTMLVideoElement>('video'), canvas = $<HTMLCanvasElement>('overl
 const hud = $('hud'), msg = $('msg'), startBtn = $<HTMLButtonElement>('start'), backendSel = $<HTMLSelectElement>('backend');
 const ctx = canvas.getContext('2d')!;
 const q = new URLSearchParams(location.search);
-const imgsz = Math.max(32, Math.round((parseInt(q.get('imgsz') || '320', 10) || 320) / 32) * 32);
+const imgsz = Math.max(32, Math.round((parseInt(q.get('imgsz') || '416', 10) || 416) / 32) * 32);
 const modelUrl = q.get('model') || `${import.meta.env.BASE_URL}models/detector.onnx`;
 const TARGET_MS = 1000 / Math.min(10, Math.max(1, parseFloat(q.get('hz') || '8') || 8));
 
@@ -107,7 +107,8 @@ async function inferLoop() {
     const t0 = performance.now();
     if (video.readyState >= 2 && video.videoWidth) {
       try {
-        const dets = await detector.detect(video);
+        const wholeCls = new Set(detector.labels.flatMap((l, i) => (WHOLE_DISHES.has(l) ? [i] : [])));
+        const dets = suppressContained(await detector.detect(video), wholeCls);
         const t1 = performance.now();
         infMs.push(t1 - t0); if (infMs.length > 20) infMs.shift();
         doneTimes.push(t1);
@@ -126,7 +127,8 @@ const rawLabel = (t: Track) => detector?.labels[t.cls] ?? String(t.cls);
 const autoFor = (l: string | undefined): Item | null => { const id = autoDishId(l, data); return id ? defaultItem(data, id) : null; };
 
 function estimateOf(item: Item): ItemEstimate | null { return safeEstimate(data, item); }
-const FLAG_TEXT: Record<string, string> = { portion_default: '≈ default portion', low_confidence: '± wide' };
+const FLAG_TEXT: Record<string, string> = { portion_default: '≈ typical portion', low_confidence: '± wide' };
+const SUGAR_ZH: Record<SugarLevel, string> = { full: '全糖', less: '少糖', half: '半糖', light: '微糖', none: '無糖' };
 
 function roundRect(x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
@@ -142,7 +144,8 @@ function drawLabel(x: number, y: number, lines: string[], bg: string, alpha: num
   if (lines[1]) { ctx.font = subFont; w2 = ctx.measureText(lines[1]).width; }
   const w = Math.min(cssW - 8, Math.max(w1, w2) + 14), h = lines[1] ? 38 : 24;
   const lx = Math.max(4, Math.min(x, cssW - w - 4));
-  const ly = y - h - 2 < 4 ? y + 2 : y - h - 2;
+  const top = 56; // keep clear of the HUD pill
+  const ly = y - h - 2 < top ? Math.max(y + 2, top) : y - h - 2;
   ctx.globalAlpha = alpha; ctx.fillStyle = bg; roundRect(lx, ly, w, h, 8); ctx.fill();
   ctx.fillStyle = '#fff'; ctx.textBaseline = 'top';
   ctx.font = mainFont; ctx.fillText(lines[0], lx + 7, ly + 4, w - 10);
@@ -156,7 +159,7 @@ function itemLines(item: Item): string[] {
   const main = est ? `${dish.zh} ${formatRange(est.lo, est.hi)} kcal` : dish.zh;
   if (!est) return [main];
   const sub: string[] = [];
-  if (dish.kind === 'drink') sub.push(sugarZh(item.sugar));
+  if (dish.kind === 'drink') sub.push(`${SUGAR_ZH[item.sugar]}?`);
   for (const f of est.flags) if (FLAG_TEXT[f]) sub.push(FLAG_TEXT[f]);
   return sub.length ? [main, sub.join(' · ')] : [main];
 }
@@ -177,9 +180,6 @@ function render(now: number) {
       const hue = (dishIds.indexOf(item.dishId) * 41 + 120) % 360;
       ctx.strokeStyle = `hsl(${hue} 85% 55%)`; ctx.strokeRect(x, y, w, h);
       drawLabel(x, y, itemLines(item), `hsl(${hue} 70% 28%)`, 0.92);
-    } else {
-      ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.setLineDash([6, 5]); ctx.strokeRect(x, y, w, h); ctx.setLineDash([]);
-      drawLabel(x, y, [`${rawLabel(t)} ${(t.score * 100).toFixed(0)}% · tap to identify`], '#000', 0.35);
     }
   }
   updateHud(now);
@@ -187,28 +187,6 @@ function render(now: number) {
   requestAnimationFrame(render);
 }
 requestAnimationFrame(render);
-
-// ---- tap to identify ----
-video.addEventListener('click', e => {
-  const r = video.getBoundingClientRect();
-  const px = e.clientX - r.left, py = e.clientY - r.top;
-  const { s, ox, oy } = mapping();
-  let best: Track | null = null, bestA = Infinity;
-  for (const t of tracker.visible()) {
-    const x = t.x1 * s + ox, y = t.y1 * s + oy, x2 = t.x2 * s + ox, y2 = t.y2 * s + oy;
-    // generous hit area: the label above the box and a few px of slop
-    if (px < x - 6 || px > x2 + 6 || py < y - 44 || py > y2 + 6) continue;
-    const a = (x2 - x) * (y2 - y);
-    if (a < bestA) { bestA = a; best = t; }
-  }
-  if (!best) return;
-  const id = best.id, label = rawLabel(best);
-  openSheet({
-    title: label, drinkOnly: DRINK_LABELS.has(label), preferBowl: BOWL_LABELS.has(label),
-    get: () => assignments.get(id),
-    set: item => assignments.set(id, item, best!.target),
-  });
-});
 
 // ---- bottom meal bar ----
 const totalEl = $('total'), nonumBtn = $<HTMLButtonElement>('nonum'), clearBtn = $<HTMLButtonElement>('clear');
@@ -219,7 +197,7 @@ function updateBar(now: number) {
   const items = assignments.activeItems();
   const ests = items.map(estimateOf).filter((e): e is ItemEstimate => e !== null);
   let big: string, sub: string;
-  if (!items.length) { big = 'Tap a box to identify'; sub = 'Pick a dish for each item'; }
+  if (!items.length) { big = 'Point at your meal'; sub = 'Dishes are recognised automatically'; }
   else if (noNumbers || !ests.length) { big = `${items.length} item${items.length > 1 ? 's' : ''}`; sub = noNumbers ? 'kcal hidden' : ''; }
   else {
     const m = totalOf(ests);

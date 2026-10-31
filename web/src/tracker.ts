@@ -1,11 +1,22 @@
-import { Box, Detection, iou } from './yolo';
+import { iou } from './yolo.ts';
+import type { Box, Detection } from './yolo.ts';
 
-export interface Track extends Box { id: number; cls: number; score: number; hits: number; missed: number; target: Box }
+/** cls is the running vote winner: per-frame scores are summed per class over the track's life, so one noisy frame
+ * cannot rename a dish. */
+export interface Track extends Box { id: number; cls: number; score: number; hits: number; missed: number; target: Box; votes: Map<number, number> }
+
+function vote(t: Track, cls: number, score: number): void {
+  t.votes.set(cls, (t.votes.get(cls) ?? 0) + score);
+  let best = t.cls, bv = -1;
+  for (const [c, v] of t.votes) if (v > bv) { bv = v; best = c; }
+  t.cls = best;
+}
 
 export class IouTracker {
   tracks: Track[] = [];
   private nextId = 1;
-  constructor(private matchIou = 0.3, private maxMissed = 4, private tauMs = 90) {}
+  private matchIou: number; private maxMissed: number; private tauMs: number;
+  constructor(matchIou = 0.3, maxMissed = 4, tauMs = 90) { this.matchIou = matchIou; this.maxMissed = maxMissed; this.tauMs = tauMs; }
 
   /** Call after each inference. */
   update(dets: Detection[]): void {
@@ -13,7 +24,6 @@ export class IouTracker {
     const usedT = new Set<number>();
     const pairs: { t: number; d: number; v: number }[] = [];
     this.tracks.forEach((t, ti) => dets.forEach((d, di) => {
-      if (t.cls !== d.cls) return;
       const v = iou(t.target, d);
       if (v >= this.matchIou) pairs.push({ t: ti, d: di, v });
     }));
@@ -23,13 +33,14 @@ export class IouTracker {
       usedT.add(p.t); usedD.add(p.d);
       const t = this.tracks[p.t], d = dets[p.d];
       t.target = { x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2 };
-      t.score = d.score; t.hits++; t.missed = 0;
+      t.score = d.score; t.hits++; t.missed = 0; vote(t, d.cls, d.score);
     }
     this.tracks.forEach((t, ti) => { if (!usedT.has(ti)) t.missed++; });
     dets.forEach((d, di) => {
       if (usedD.has(di)) return;
       this.tracks.push({ id: this.nextId++, cls: d.cls, score: d.score, hits: 1, missed: 0,
-        x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2, target: { x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2 } });
+        x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2, target: { x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2 },
+        votes: new Map([[d.cls, d.score]]) });
     });
     this.tracks = this.tracks.filter(t => t.missed <= this.maxMissed);
   }

@@ -17,8 +17,10 @@ const isHtml = (r: Response) => (r.headers.get('content-type') || '').includes('
 export class Detector {
   session!: ort.InferenceSession;
   backend: Backend = 'wasm';
+  /** Output class names (deduplicated); classMap[modelClass] indexes into it. */
   labels: string[] = COCO80;
-  confThr = 0.25;
+  classMap?: number[];
+  confThr = 0.35; // tuned for the YOLOE prompt model (ml/export_openvocab.py)
   private lbx: Letterboxer;
   private inName = 'images';
   private outName = 'output0';
@@ -37,7 +39,12 @@ export class Detector {
       const r = await fetch(`${base}models/detector.labels.json`);
       if (r.ok && !isHtml(r)) {
         const j = await r.json();
-        if (Array.isArray(j) && j.length) this.labels = j.map(String);
+        if (Array.isArray(j) && j.length) {
+          // One entry per model class; an open-vocab export repeats a dish id for each of its prompts.
+          const names = j.map(String), uniq = [...new Set(names)];
+          this.labels = uniq;
+          this.classMap = names.map(n => uniq.indexOf(n));
+        }
       }
     } catch { /* keep COCO names */ }
     const buf = new Uint8Array(await (await fetch(this.modelUrl)).arrayBuffer());
@@ -62,6 +69,7 @@ export class Detector {
     const out = await this.session.run({ [this.inName]: new ort.Tensor('float32', data, [1, 3, s, s]) });
     const t = out[this.outName];
     const arr = (t.data ?? await t.getData()) as Float32Array;
-    return decodeYolo(arr, t.dims, lb, video.videoWidth, video.videoHeight, this.confThr);
+    return decodeYolo(arr, t.dims, lb, video.videoWidth, video.videoHeight, this.confThr, 0.45, 50,
+      this.classMap ?? this.labels.map((_, i) => i), true);
   }
 }

@@ -99,6 +99,7 @@ Time estimates assume part-time work. Each milestone has an exit check you can t
 
 ### M2: Web Lens v0, playable (days 4–8)
 1. Bootstrap without a custom model: COCO YOLO11n (boxes only, ONNX, `imgsz=320`). It finds `bowl`, `cup` and `dining table`, plus a few foods. You **tap a box** and pick a dish from chips (top 15 dishes). This is fully offline and playable right away.
+   **Update 2026-10-31:** replaced by YOLOE-11s with text prompts for the 15 dishes (`ml/export_openvocab.py`, imgsz 416). Dishes are named automatically, and tap-to-pick has been removed. On 22 web photos the top-1 dish was right on 13/22 (59%), so the trained model (M3) is still the accuracy path.
 2. Portion without depth: the container prior.
    - Pick the container once: 小碗 / 大碗 / 便當盒 / 26 cm 盤 / 500 or 700 mL 杯.
    - Portion = container capacity × fill estimate, with the fill estimate from food-mask area divided by container area. Use a wide default fill of 0.6–1.0 until masks exist.

@@ -98,6 +98,5 @@ export function autoDishId(label: string | undefined, data: MealData): string | 
   return label && data.dishes[label] ? label : null;
 }
 
-/** COCO classes that open the drink sheet / may be marked as a container. */
-export const DRINK_LABELS = new Set(['cup', 'wine glass', 'bottle']);
-export const BOWL_LABELS = new Set(['bowl']);
+/** Dishes served as one bowl whose toppings are part of the dish: boxes inside them are not extra items. */
+export const WHOLE_DISHES = new Set(['beef_noodle_soup', 'lu_rou_fan']);

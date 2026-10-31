@@ -34,20 +34,6 @@
   #bar .btn.on{background:#ffd166;color:#000}
   #disc{margin-top:4px;font-size:11px;opacity:.55;text-align:center}
 
-  /* bottom sheet */
-  #backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s}
-  #backdrop.open{opacity:1;pointer-events:auto}
-  #sheet{position:absolute;left:0;right:0;bottom:0;max-height:72%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#1c1c1e;border-radius:18px 18px 0 0;padding:14px max(14px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(14px,env(safe-area-inset-left,0px));transform:translateY(105%);transition:transform .22s ease;visibility:hidden}
-  #sheet.open{transform:none;visibility:visible}
-  #sheet .head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
-  #sheet .ttl{font-size:16px;font-weight:700}
-  #sheet .sec{margin:12px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;opacity:.55}
-  .chips{display:flex;flex-wrap:wrap;gap:8px}
-  .chip{min-height:44px;min-width:44px;padding:4px 12px;border-radius:12px;border:2px solid transparent;background:#2c2c2e;color:#fff;text-align:left;display:flex;flex-direction:column;justify-content:center}
-  .chip .zh{font-size:17px;font-weight:600;line-height:1.2}
-  .chip .en{font-size:11px;opacity:.6;line-height:1.2}
-  .chip.on{border-color:#2ecc71;background:#1f3d2b}
-  #sheet > .btn{margin-top:16px;width:100%}
 </style>
 </head>
 <body>
@@ -65,14 +51,12 @@
   <button id="start" class="btn" type="button">Start camera</button>
   <div id="bar">
     <div id="barrow">
-      <div id="total"><div class="big">Tap a box to identify</div><div class="sub"></div></div>
+      <div id="total"><div class="big">Point at your meal</div><div class="sub"></div></div>
       <button id="nonum" class="btn ghost" type="button">Hide kcal</button>
       <button id="clear" class="btn ghost" type="button">Clear meal</button>
     </div>
     <div id="disc">Estimates only, not medical advice.</div>
   </div>
-  <div id="backdrop"></div>
-  <div id="sheet"></div>
 </div>
 <script type="module" src="/src/main.ts"></script>
 </body>

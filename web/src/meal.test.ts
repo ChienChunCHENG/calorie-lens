@@ -5,6 +5,8 @@ import { readFileSync } from 'node:fs';
 import { buildMealData, defaultItem, estimateItem, volumeFor, totalOf, autoDishId } from './meal.ts';
 import type { RawNutrition, Item } from './meal.ts';
 import { Assignments } from './assign.ts';
+import { IouTracker } from './tracker.ts';
+import { suppressContained } from './yolo.ts';
 
 const raw = JSON.parse(readFileSync(new URL('../../data/nutrition.json', import.meta.url), 'utf8')) as RawNutrition;
 const data = buildMealData(raw);
@@ -54,28 +56,51 @@ test('auto-assign only for dish-id labels', () => {
   assert.equal(autoDishId('bowl', data), null);
 });
 
-test('assignment sticks, re-attaches within 1.5 s at IoU > 0.3, not after', () => {
+test('auto assignment follows the label, re-attaches within 1.5 s at IoU > 0.3, not after', () => {
   const a = new Assignments();
+  const auto = (l: string | undefined) => (autoDishId(l, data) ? defaultItem(data, l!) : null);
   const box = { x1: 0, y1: 0, x2: 100, y2: 100 };
-  a.sync([{ id: 1, box }], 0);
-  a.set(1, defaultItem(data, 'rice_white'));
-  a.sync([{ id: 1, box }], 100);
+  a.sync([{ id: 1, box, label: 'rice_white' }], 0, auto);
   assert.equal(a.get(1)?.dishId, 'rice_white');
-  a.sync([], 200); // lost
+  a.sync([{ id: 1, box, label: 'lu_rou_fan' }], 100, auto); // track's vote changed
+  assert.equal(a.get(1)?.dishId, 'lu_rou_fan');
+  a.sync([], 200, auto); // lost
   assert.equal(a.activeItems().length, 1); // still counted
-  a.sync([{ id: 2, box: { x1: 10, y1: 10, x2: 110, y2: 110 } }], 900);
-  assert.equal(a.get(2)?.dishId, 'rice_white');
+  a.sync([{ id: 2, box: { x1: 10, y1: 10, x2: 110, y2: 110 }, label: 'lu_rou_fan' }], 900, auto);
+  assert.equal(a.get(2)?.dishId, 'lu_rou_fan');
   assert.equal(a.activeItems().length, 1);
-  // too late
-  a.sync([], 1000);
-  a.sync([{ id: 3, box }], 3000);
+  // too late: a new track gets its own label's item
+  a.sync([], 1000, auto);
+  a.sync([{ id: 3, box, label: 'bowl' }], 3000, auto);
   assert.equal(a.get(3), null);
-  // far away
-  a.set(3, defaultItem(data, 'fried_egg'));
-  a.sync([], 3100);
-  a.sync([{ id: 4, box: { x1: 500, y1: 500, x2: 600, y2: 600 } }], 3200);
-  assert.equal(a.get(4), null);
-  // auto-assign for new track
-  a.sync([{ id: 5, box, label: 'pork_chop' }], 9000, l => (autoDishId(l, data) ? defaultItem(data, l!) : null));
-  assert.equal(a.get(5)?.dishId, 'pork_chop');
+  a.sync([{ id: 4, box, label: 'fried_egg' }], 3100, auto);
+  // far away: no re-attach
+  a.sync([], 3200, auto);
+  a.sync([{ id: 5, box: { x1: 500, y1: 500, x2: 600, y2: 600 } }], 3300, auto);
+  assert.equal(a.get(5), null);
+});
+
+test('tracker keeps one track per dish and votes its label', () => {
+  const t = new IouTracker();
+  const b = { x1: 0, y1: 0, x2: 100, y2: 100 };
+  t.update([{ ...b, cls: 2, score: 0.6 }]);
+  t.update([{ ...b, cls: 1, score: 0.4 }]); // one noisy frame
+  t.update([{ ...b, cls: 2, score: 0.5 }]);
+  assert.equal(t.tracks.length, 1);
+  assert.equal(t.tracks[0].cls, 2);
+  t.update([{ ...b, cls: 1, score: 0.9 }]);
+  t.update([{ ...b, cls: 1, score: 0.9 }]);
+  assert.equal(t.tracks[0].cls, 1); // sustained evidence wins
+});
+
+test('boxes inside a whole-bowl dish or a same-dish box are dropped', () => {
+  const bowl = { x1: 0, y1: 0, x2: 200, y2: 200, cls: 8, score: 0.8 };
+  const beef = { x1: 20, y1: 20, x2: 80, y2: 80, cls: 2, score: 0.5 };
+  const rice = { x1: 0, y1: 0, x2: 200, y2: 200, cls: 0, score: 0.7 };
+  const leg = { x1: 20, y1: 20, x2: 80, y2: 80, cls: 2, score: 0.5 };
+  assert.deepEqual(suppressContained([bowl, beef], new Set([8])), [bowl]);
+  assert.deepEqual(suppressContained([rice, leg], new Set([8])), [rice, leg]); // bento: leg on rice stays
+  const eggBig = { x1: 0, y1: 0, x2: 200, y2: 200, cls: 5, score: 0.4 };
+  const egg = { x1: 10, y1: 10, x2: 90, y2: 90, cls: 5, score: 0.6 };
+  assert.deepEqual(suppressContained([eggBig, egg], new Set()), [egg]);
 });

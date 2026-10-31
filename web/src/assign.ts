@@ -17,7 +17,7 @@ export function rectIou(a: Rect, b: Rect): number {
   return ua > 0 ? inter / ua : 0;
 }
 
-interface Entry { item: Item | null; box: Rect }
+interface Entry { item: Item | null; box: Rect; label?: string }
 interface Ghost { item: Item; box: Rect; lostAt: number }
 
 export class Assignments {
@@ -26,14 +26,7 @@ export class Assignments {
 
   get(id: number): Item | null { return this.entries.get(id)?.item ?? null; }
 
-  /** User choice (null removes). Sticks to the track id and is never overwritten by auto-assign afterwards. */
-  set(id: number, item: Item | null, box?: Rect): void {
-    const e = this.entries.get(id);
-    if (e) e.item = item;
-    else this.entries.set(id, { item, box: box ?? { x1: 0, y1: 0, x2: 0, y2: 0 } });
-  }
-
-  /** Call after each tracker update. autoFor(label) may return an item for a label (future custom model). */
+  /** Call after each tracker update. autoFor(label) maps a track's voted label to an item (null: not a known dish). */
   sync(tracks: TrackRef[], now: number, autoFor?: (label: string | undefined) => Item | null): void {
     const present = new Set(tracks.map(t => t.id));
     for (const [id, e] of this.entries) {
@@ -44,7 +37,11 @@ export class Assignments {
     this.ghosts = this.ghosts.filter(g => now - g.lostAt <= MEAL_GRACE_MS);
     for (const t of tracks) {
       const e = this.entries.get(t.id);
-      if (e) { e.box = t.box; continue; }
+      if (e) {
+        e.box = t.box;
+        if (autoFor && t.label !== e.label) { e.label = t.label; e.item = autoFor(t.label); } // track's vote changed
+        continue;
+      }
       let item: Item | null = null;
       let best = -1, bi = REATTACH_IOU;
       this.ghosts.forEach((g, i) => {
@@ -54,7 +51,7 @@ export class Assignments {
       });
       if (best >= 0) item = this.ghosts.splice(best, 1)[0].item;
       else item = autoFor?.(t.label) ?? null;
-      this.entries.set(t.id, { item, box: t.box });
+      this.entries.set(t.id, { item, box: t.box, label: t.label });
     }
   }
 
