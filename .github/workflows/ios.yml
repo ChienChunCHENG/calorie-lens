@@ -49,6 +49,12 @@ jobs:
           CL_FIXTURES: ${{ runner.temp }}/fixtures
         run: swift test --package-path ios/Packages/CalorieCore
 
+      - name: CalorieCore release-mode timing (device resolution)
+        shell: bash
+        env:
+          CL_PERF: "1"
+        run: swift test -c release -Xswiftc -enable-testing --package-path ios/Packages/CalorieCore --filter PerfTests 2>&1 | tee perf.txt
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
