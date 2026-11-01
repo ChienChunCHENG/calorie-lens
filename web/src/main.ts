@@ -112,7 +112,17 @@ async function startCamera(): Promise<void> {
 }
 function stopStream(): void { stream?.getTracks().forEach(t => t.stop()); stream = null; vid.srcObject = null; }
 
+// True while the one-time isolation reload (see the end of this file) has not happened yet.
+let coiPending = false;
 function openLive(): void {
+  if (coiPending) {
+    // A tap before the reload would be wiped out by it: remember the tap and let the reload reopen the camera.
+    try { sessionStorage.setItem('cl-autostart', '1'); } catch { /* storage blocked: just continue below */ }
+    ($('go') as HTMLButtonElement).disabled = true;
+    // Never strand the user: if the reload does not come within 3 s, start without it.
+    setTimeout(() => { if (coiPending) { coiPending = false; ($('go') as HTMLButtonElement).disabled = false; openLive(); } }, 3000);
+    return;
+  }
   running = true; busy = false;
   $('start').hidden = true; $('live').hidden = false;
   resetLens(); updateLoad();
@@ -331,14 +341,21 @@ requestAnimationFrame(frame);
 // First render done: start fetching / initialising the models so they are ready (or nearly) when the user taps.
 setTimeout(warm, 0);
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  navigator.serviceWorker.register(`${BASE}sw.js`).catch(() => { /* optional */ });
+  navigator.serviceWorker.register(`${BASE}sw.js`).catch(() => { coiPending = false; /* optional */ });
   // The service worker adds the isolation headers; a page only gets them once it is controlled, so reload once.
   if (!self.crossOriginIsolated) {
-    const reloadOnce = () => {
-      try { if (sessionStorage.getItem('cl-coi')) return; sessionStorage.setItem('cl-coi', '1'); } catch { return; }
-      location.reload();
-    };
-    if (navigator.serviceWorker.controller) reloadOnce();
-    else navigator.serviceWorker.addEventListener('controllerchange', reloadOnce, { once: true });
+    let done = true;
+    try { done = !!sessionStorage.getItem('cl-coi'); } catch { /* no storage: never reload */ }
+    if (!done) {
+      coiPending = true;
+      const reloadOnce = () => {
+        try { sessionStorage.setItem('cl-coi', '1'); } catch { coiPending = false; return; }
+        location.reload();
+      };
+      if (navigator.serviceWorker.controller) reloadOnce();
+      else navigator.serviceWorker.addEventListener('controllerchange', reloadOnce, { once: true });
+    }
   }
 }
+// The user tapped "Turn on camera" just before the isolation reload: open the camera now.
+try { if (sessionStorage.getItem('cl-autostart')) { sessionStorage.removeItem('cl-autostart'); if (!coiPending) openLive(); } } catch { /* ignore */ }
