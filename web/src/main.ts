@@ -69,7 +69,7 @@ function onWorker(m: OutMsg): void {
   if (m.type === 'progress') { dl = { loaded: m.loaded ?? dl.loaded, total: m.total ?? dl.total, phase: m.phase }; updateLoad(); }
   else if (m.type === 'ready') { ready = true; noneSince = performance.now(); updateLoad(); }
   else if (m.type === 'error') { busy = false; if (!ready) { loadError = true; updateLoad(); } }
-  else if (m.type === 'result') { busy = false; if (running) onResult(m.r); }
+  else if (m.type === 'result') { busy = false; if (testWait) { const f = testWait; testWait = null; f(m.r); } else if (running) onResult(m.r); }
 }
 const mb = (n: number) => Math.round(n / 1048576);
 function updateLoad(): void {
@@ -170,6 +170,27 @@ const stamps: number[] = [];
 const lens = { frames: 0, lastMs: 0, fps: 0, tracks: [] as unknown[], firstLabelMs: null as number | null, tapToLabelMs: null as number | null,
   ready: false, nBoxes: 0, prepMs: 0, locMs: 0, clsMs: 0, changes: [] as { id: number; from: string; to: string; t: number }[] };
 (window as unknown as { __clLens: typeof lens }).__clLens = lens;
+
+/* Test hook for the offline evaluation (ml/snap/found_check.py): runs a still photo through the same worker the camera
+   uses, `times` frames in a row (a phone held still), and returns what the lens would show. Not used by the UI. */
+let testWait: ((r: any) => void) | null = null;
+(window as unknown as { __clTest: unknown }).__clTest = {
+  ready: () => ready,
+  warm: () => warm(),
+  async analyze(blob: Blob, times = 2): Promise<unknown> {
+    const full = await createImageBitmap(blob);
+    const s = Math.min(1, MAX_EDGE / Math.max(full.width, full.height));
+    const w = Math.max(1, Math.round(full.width * s)), h = Math.max(1, Math.round(full.height * s));
+    full.close();
+    getWorker().postMessage({ type: 'reset' } satisfies InMsg);
+    let r: any = null;
+    for (let i = 0; i < times; i++) {
+      const bm = await createImageBitmap(blob, { resizeWidth: w, resizeHeight: h, resizeQuality: 'medium' });
+      r = await new Promise(res => { testWait = res; getWorker().postMessage({ type: 'frame', bitmap: bm, t: performance.now() } satisfies InMsg, [bm]); });
+    }
+    return r;
+  },
+};
 
 function resetLens(): void {
   lens.frames = 0; lens.lastMs = 0; lens.fps = 0; lens.tracks = []; lens.firstLabelMs = null; lens.tapToLabelMs = null; lens.changes = [];

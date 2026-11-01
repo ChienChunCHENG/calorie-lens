@@ -42,6 +42,8 @@ interface Tr {
   votes: Map<string, number>; food: number; neg: number; label: string | null;
   /** Top-1 probability of the latest classification (a confident first sighting may show at once). */
   conf: number;
+  /** Region is the whole frame (no box found): classified with the stricter fallback gate. */
+  whole?: boolean;
   out: Omit<LensTrack, 'id' | 'box'> | null;
 }
 
@@ -67,10 +69,13 @@ export class LensEngine {
     const p1 = performance.now();
     const out = await this.run.locate(data, L.imgsz);
     this.stats.prepMs = p1 - p0; this.stats.locMs = performance.now() - p1; this.stats.clsMs = 0;
-    const dets = selectBoxes(out.data, out.dims, lb, img.w, img.h,
-      { nc: L.classes.length, conf: L.conf, iou: L.iou, contain: L.contain, maxDet: L.max_det })
-      .filter(d => L.classes[d.cls]?.food !== false);
+    const all = selectBoxes(out.data, out.dims, lb, img.w, img.h,
+      { nc: L.classes.length, conf: L.conf, iou: L.iou, contain: L.contain, maxDet: L.max_det });
+    const dets: (Box & { whole?: boolean })[] = all.filter(d => L.classes[d.cls]?.food !== false);
     this.stats.nBoxes = dets.length;
+    // Nothing located at all (not even an empty cup): treat the whole frame as one region, judged by the stricter
+    // fallback gate, so a close-up of a single food (a bowl filling the screen) still gets a label.
+    if (!all.length && L.fallback_whole) dets.push({ x1: 0, y1: 0, x2: img.w, y2: img.h, whole: true });
 
     // greedy IoU association against each track's latest box (class-agnostic)
     const pairs: { t: number; d: number; v: number }[] = [];
@@ -81,13 +86,13 @@ export class LensEngine {
       if (usedT.has(p.t) || usedD.has(p.d)) continue;
       usedT.add(p.t); usedD.add(p.d);
       const t = this.tracks[p.t], d = dets[p.d];
-      t.box = { x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2 }; t.hits++; t.missed = 0;
+      t.box = { x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2 }; t.hits++; t.missed = 0; t.whole = !!d.whole;
     }
     this.tracks.forEach((t, ti) => { if (!usedT.has(ti)) t.missed++; });
     dets.forEach((d, di) => {
       if (usedD.has(di)) return;
       this.tracks.push({ id: this.nextId++, box: { x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2 }, hits: 1, missed: 0, lastCls: -1,
-        votes: new Map(), food: 0, neg: 0, label: null, conf: 0, out: null });
+        votes: new Map(), food: 0, neg: 0, label: null, conf: 0, out: null, whole: !!d.whole });
     });
     this.tracks = this.tracks.filter(t => t.missed <= o.maxMissed);
 
@@ -96,11 +101,12 @@ export class LensEngine {
       .sort((x, y) => (x.lastCls < 0 ? -1e12 : x.lastCls) - (y.lastCls < 0 ? -1e12 : y.lastCls)).slice(0, o.maxClassify);
     for (const t of due) {
       const c0 = performance.now();
-      const rect = cropRect(t.box, img.w, img.h, L.crop_pad);
+      const rect = cropRect(t.box, img.w, img.h, t.whole ? 0 : L.crop_pad);
       const emb = l2normalize(await this.run.embed(clipTensor(cropRGBA(img, rect), C), C.size));
       const sims = similarities(emb, this.a.emb, this.a.vocab.length, C.dim);
       if (this.a.protos) protoBoost(sims, emb, this.a.protos);
-      const cl = classify(sims, this.a.vocab, C.logit_scale, C.gate, C.mix);
+      const gate = t.whole && L.fallback_whole ? { p_neg_max: L.fallback_whole.p_neg_max, p_food_min: L.fallback_whole.p_food_min } : C.gate;
+      const cl = classify(sims, this.a.vocab, C.logit_scale, gate, C.mix);
       t.lastCls = now; this.stats.classified++; this.stats.clsMs += performance.now() - c0;
       this.vote(t, cl);
     }
