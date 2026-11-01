@@ -23,5 +23,6 @@ export default defineConfig({
     fs: { allow: [repoRoot] }, // lets web import ../core/ts/rangeEngine.ts
     headers: { 'Cross-Origin-Opener-Policy': 'same-origin', 'Cross-Origin-Embedder-Policy': 'require-corp' },
   },
+  worker: { format: 'es', plugins: () => [dropOrtWasm] },
   build: { target: 'es2022' },
 });

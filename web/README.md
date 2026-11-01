@@ -1,87 +1,18 @@
-# Calorie Lens: Web Lens (Vite + TypeScript)
+# Calorie Lens: Snap log (Vite + TypeScript PWA)
 
-Rear camera + on-device YOLO11 detection (onnxruntime-web, WebGPU with WASM fallback) + IoU tracking + smoothed box overlay + HUD.
-
-```
-npm install
-npm run dev -- --host      # http://localhost:5173  (predev copies ORT wasm files to public/ort)
-npm run build              # tsc --noEmit + vite build -> dist/
-npm run check:model        # runs one dummy inference on public/models/detector.onnx (Node, wasm)
-```
-
-URL params: `?model=<url>` (override model), `?imgsz=320` (square input, multiple of 32; must match export), `?hz=8` (target inference rate, max 10).
-No `/models/detector.onnx` means camera-only mode. Class names come from `/models/detector.labels.json` (array), else COCO-80.
-
-The HUD shows the backend in use, median inference ms (last 20), effective Hz, JS heap (Chrome only; n/a on Safari), and elapsed time for the 5-minute soak test.
-
-## How to play
-
-1. Open https://chienchuncheng.github.io/calorie-lens/ (or `npm run dev -- --host` and the HTTPS tunnel URL) in Safari on the iPhone, tap **Start camera**.
-2. Point at the food. The detector names each dish by itself (no tapping): the bundled model is YOLOE with text prompts
-   for the 15 dishes (`ml/export_openvocab.py`), so only the 15 dishes are boxed, never people or furniture.
-3. Portions are the dish's typical portion in its usual container (container_prior[0]); milk tea assumes 半糖. The web
-   lens has no depth, so ranges are wide; the native app measures volume.
-4. The label above the box shows the calorie range; the bottom bar shows the meal total. Labels stay on the item for about 1.5 s if tracking drops.
-5. **Hide kcal** shows names only; **Clear meal** resets. Tap the HUD pill (top left) for timing and the backend switch. Estimates only, not medical advice.
-
-`npm test` runs the meal-logic tests (`node --experimental-strip-types`). `npm run dev`/`build` first generate `src/generated/labels.json` from `ml/labels.yaml` (`scripts/gen-labels.mjs`).
-
-## Testing on an iPhone from Windows
-
-`getUserMedia` requires HTTPS (localhost is exempt, the phone is not).
-
-### Option A: cloudflared quick tunnel (recommended)
-
-cloudflared is not installed by default. Install it:
+Take or choose one meal photo; everything runs on the phone (onnxruntime-web in a module Web Worker, WebGPU else WASM).
+Pipeline and file formats: `../spec/snap_contract.md`. Models are read at runtime from `public/models/` (written by `ml/snap/`).
 
 ```
-winget install --id Cloudflare.cloudflared
+npm ci
+npm run dev        # predev copies ORT wasm to public/ort; http://localhost:5173
+npm test           # pure modules (node --experimental-strip-types)
+npm run build -- --base=/calorie-lens/
+npm run icons      # regenerate public/icons (needs Pillow)
 ```
 
-Open a new terminal (so PATH refreshes), then:
-
-```
-npm run dev -- --host
-# in a second terminal:
-cloudflared tunnel --url http://localhost:5173
-```
-
-Open the printed `https://<random>.trycloudflare.com` URL in Safari on the iPhone and tap "Start camera". Vite is already configured with `allowedHosts: true`.
-
-### Option B: local HTTPS with @vitejs/plugin-basic-ssl
-
-`@vitejs/plugin-basic-ssl` is already a devDependency. Add to `vite.config.ts`:
-
-```ts
-import basicSsl from '@vitejs/plugin-basic-ssl';
-// plugins: [basicSsl()],
-```
-
-Run `npm run dev -- --host`, find your PC's LAN IP (`ipconfig`), and open `https://<LAN-IP>:5173` on the iPhone (same Wi-Fi; allow Node through Windows Firewall). Safari warns about the self-signed certificate: tap "Show Details" > "visit this website". Camera permission works after that. Cloudflared is less fiddly.
-
-## Deploy to Cloudflare Pages
-
-`public/_headers` sets COOP `same-origin` and COEP `require-corp` (cross-origin isolation, needed later for multi-threaded WASM). All assets, including ORT wasm, are same-origin, so COEP is satisfied.
-
-- Dashboard: Pages > Create project > Connect to Git. Root directory `web`, build command `npm run build`, output directory `dist`, Node 22.
-- Or CLI: `npm run build && npx wrangler pages deploy dist --project-name calorie-lens`.
-
-Note: Cloudflare Pages rejects single files over 25 MB; `detector.onnx` (about 10 MB) is fine.
-
-## Model
-
-`public/models/detector.onnx` is COCO YOLO11n exported at imgsz 320 (output `[1, 84, 2100]`). To regenerate (e.g. in Colab, or any Python with torch):
-
-```
-pip install ultralytics onnx onnxslim
-yolo export model=yolo11n.pt format=onnx imgsz=320 opset=17 simplify=True
-```
-
-Copy `yolo11n.onnx` to `web/public/models/detector.onnx`. For a custom model, also supply `detector.labels.json` (JSON array of class names, in class-index order). Non-square or dynamic exports are not supported by the letterbox code; export with a fixed square `imgsz`.
-
-## Notes
-
-- Vite `server.fs.allow` includes the repo root so later code can import `../core/ts/rangeEngine.ts`.
-- Dev: ORT wasm files are copied from `node_modules/onnxruntime-web/dist` to `public/ort/` by `scripts/copy-ort.mjs` (gitignored, runs on `predev`). Production build: the ORT wasm files (15-29 MB) would break Cloudflare Pages 25 MiB per-file limit, so prod loads the pinned version from jsDelivr (`?ortbase=https://.../` overrides; self-host smaller files there if you need offline).
-- Wasm is single-threaded unless `crossOriginIsolated` (Vite dev and Pages both send COOP/COEP).
-- iOS 26 WebGPU has had memory-leak reports; watch the HUD heap/time during the 5-minute soak and switch to `wasm` if it degrades.
+- `src/worker.ts` glue (ORT, cache) -> `src/pipeline.ts` (injected runners, unit-tested) -> `yolo.ts`, `imageops.ts`, `classify.ts`, `mixture.ts`.
+- Storage: IndexedDB `calorie-lens/meals` (`src/db.ts`). Each item stores `{p10,p50,p90}` and `q`: 64 quantiles at (i+0.5)/64 of its 4000 Monte Carlo samples
+  (whole kcal). Meal/day totals resample each item by inverse CDF from `q` (seeded, n=4000) and sum, treating items as independent.
+- Models are cached in Cache Storage (`calorie-lens-models-v1`); `public/sw.js` caches the app shell network-first and the pinned ORT wasm from jsDelivr.
+- `?ortbase=<url/>` overrides where ORT wasm is loaded from.

@@ -3,13 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "node --experimental-strip-types --test src/meal.test.ts",
+    "test": "node --experimental-strip-types --test \"src/**/*.test.ts\"",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "predev": "node scripts/gen-labels.mjs && node scripts/copy-ort.mjs",
+    "predev": "node scripts/copy-ort.mjs",
     "preview": "vite preview",
-    "check:model": "node scripts/check-model.mjs",
-    "prebuild": "node scripts/gen-labels.mjs"
+    "icons": "py scripts/make-icons.py"
   },
   "keywords": [],
   "author": "",

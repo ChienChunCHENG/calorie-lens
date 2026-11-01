@@ -1,63 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Calorie Lens</title>
-<style>
-  html,body{margin:0;height:100%;background:#000;color:#fff;font:14px -apple-system,system-ui,"PingFang TC",sans-serif;overflow:hidden;overscroll-behavior:none}
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  #stage{position:fixed;inset:0;overflow:hidden}
-  video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
-  canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-  button,select{font:inherit;touch-action:manipulation}
-  button.btn,select{min-height:44px;padding:0 16px;border-radius:12px;border:0;background:#2ecc71;color:#000;font-weight:600}
-  button.btn.ghost{background:rgba(255,255,255,.14);color:#fff}
-  select{background:#fff}
-  #msg{position:absolute;left:12px;right:12px;top:40%;text-align:center;font-size:16px;color:#ffd166;pointer-events:none}
-  #start{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);min-width:180px;min-height:52px;font-size:17px}
-
-  /* HUD: corner pill, tap to expand */
-  #hudwrap{position:absolute;top:calc(env(safe-area-inset-top,0px) + 6px);left:max(8px,env(safe-area-inset-left,0px));max-width:calc(100% - 16px)}
-  #hudpill{min-height:44px;min-width:44px;padding:0 12px;border-radius:22px;border:0;background:rgba(0,0,0,.5);color:#cfd;font:11px ui-monospace,Menlo,monospace}
-  #hudpanel{display:none;margin-top:6px;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.65)}
-  #hudwrap.open #hudpanel{display:block}
-  #hud{font:11px ui-monospace,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:8px}
-
-  /* bottom meal bar */
-  #bar{position:absolute;left:0;right:0;bottom:0;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 8px) max(12px,env(safe-area-inset-left,0px));background:rgba(0,0,0,.62);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-  #barrow{display:flex;align-items:center;gap:8px}
-  #total{flex:1;min-width:0}
-  #total .big{font-size:20px;font-weight:700;line-height:1.2}
-  #total .sub{font-size:12px;opacity:.7}
-  #bar .btn{padding:0 12px;font-size:13px;flex:none}
-  #bar .btn.on{background:#ffd166;color:#000}
-  #disc{margin-top:4px;font-size:11px;opacity:.55;text-align:center}
-
-</style>
+<meta name="theme-color" content="#1f9d55" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#111613" media="(prefers-color-scheme: dark)" />
+<meta name="color-scheme" content="light dark" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Calorie Lens" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 </head>
 <body>
-<div id="stage">
-  <video id="video" playsinline muted autoplay></video>
-  <canvas id="overlay"></canvas>
-  <div id="hudwrap">
-    <button id="hudpill" type="button">HUD</button>
-    <div id="hudpanel">
-      <div id="hud">HUD</div>
-      <select id="backend"><option value="webgpu">webgpu (fallback wasm)</option><option value="wasm">wasm</option></select>
-    </div>
-  </div>
-  <div id="msg"></div>
-  <button id="start" class="btn" type="button">Start camera</button>
-  <div id="bar">
-    <div id="barrow">
-      <div id="total"><div class="big">Point at your meal</div><div class="sub"></div></div>
-      <button id="nonum" class="btn ghost" type="button">Hide kcal</button>
-      <button id="clear" class="btn ghost" type="button">Clear meal</button>
-    </div>
-    <div id="disc" style="opacity:1;color:#ffd166;font-weight:600">Preview: recognition is being rebuilt. It mistakes cups and pans for milk tea, so ignore these numbers.</div>
-  </div>
-</div>
+<div id="app"></div>
 <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

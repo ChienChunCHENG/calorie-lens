@@ -1,0 +1,73 @@
+{
+ "imgsz": 640,
+ "input": "images",
+ "output": "output0",
+ "classes": [
+  {
+   "name": "food",
+   "food": true
+  },
+  {
+   "name": "dish of food",
+   "food": true
+  },
+  {
+   "name": "bowl of food",
+   "food": true
+  },
+  {
+   "name": "plate of food",
+   "food": true
+  },
+  {
+   "name": "drink",
+   "food": true
+  },
+  {
+   "name": "cup",
+   "food": true
+  },
+  {
+   "name": "cup of drink",
+   "food": true
+  },
+  {
+   "name": "glass of drink",
+   "food": true
+  },
+  {
+   "name": "bubble tea",
+   "food": true
+  },
+  {
+   "name": "empty cup",
+   "food": false
+  },
+  {
+   "name": "empty glass",
+   "food": false
+  },
+  {
+   "name": "paper cup",
+   "food": false
+  },
+  {
+   "name": "tumbler",
+   "food": false
+  },
+  {
+   "name": "mug",
+   "food": false
+  }
+ ],
+ "conf": 0.15,
+ "iou": 0.3,
+ "contain": 0.6,
+ "max_det": 6,
+ "crop_pad": 0.2,
+ "fallback_whole": {
+  "when": "no_boxes",
+  "p_neg_max": 0.005,
+  "p_food_min": 0.02
+ }
+}

@@ -1,0 +1,35 @@
+{
+ "input": "image",
+ "output": "embedding",
+ "dtype": "float32",
+ "size": 256,
+ "resize": "shortest",
+ "crop": "center",
+ "interpolation": "bilinear",
+ "mean": [
+  0.0,
+  0.0,
+  0.0
+ ],
+ "std": [
+  1.0,
+  1.0,
+  1.0
+ ],
+ "dim": 512,
+ "logit_scale": 64.25018310546875,
+ "template": "a photo of {}.",
+ "gate": {
+  "p_neg_max": 0.1,
+  "p_food_min": 0.05
+ },
+ "mix": {
+  "k": 3,
+  "cum": 0.7,
+  "sure": 0.7
+ },
+ "templates": [
+  "a photo of {}."
+ ],
+ "neg_prompts": "custom"
+}

@@ -1,0 +1,456 @@
+{
+ "P": {
+  "cs": "A2+N3",
+  "conf": 0.15,
+  "contain": 0.6,
+  "iou": 0.3,
+  "fb_neg": 0.005,
+  "fb_food": 0.02,
+  "max_det": 6,
+  "pad": 0.2,
+  "mode": "shortest",
+  "tpl": "t1/custom",
+  "scale": 64.25,
+  "gate": {
+   "p_neg_max": 0.1,
+   "p_food_min": 0.05
+  },
+  "mix": {
+   "k": 3,
+   "cum": 0.7,
+   "sure": 0.7
+  },
+  "fallback": "no_boxes"
+ },
+ "results": {
+  "neg_user.all": [
+   0.0,
+   0.0,
+   10
+  ],
+  "neg_extra.all": [
+   0.03333333333333333,
+   0.03333333333333333,
+   30
+  ],
+  "neg_extra.tune": [
+   0.0,
+   0.0,
+   15
+  ],
+  "neg_extra.held": [
+   0.06666666666666667,
+   0.06666666666666667,
+   15
+  ],
+  "drinks.all": [
+   1.0,
+   0.9743589743589743,
+   39
+  ],
+  "drinks.tune": [
+   1.0,
+   0.95,
+   20
+  ],
+  "drinks.held": [
+   1.0,
+   1.0,
+   19
+  ],
+  "uec": {
+   "recall": 0.5514511873350924,
+   "precision": 0.6186186186186187,
+   "items_per_img": 2.6015625,
+   "gt_per_img": 2.9609375
+  },
+  "food101": {
+   "n": 300,
+   "logged_any": 0.9933333333333333,
+   "n_mappable": 185,
+   "logged_mappable": 0.9945945945945946,
+   "whole_top1": 0.5945945945945946,
+   "whole_top5": 0.8540540540540541,
+   "item_top1": 0.5978260869565217,
+   "item_topK": 0.782608695652174,
+   "kcal_mape_mix_median": 0.2504192522736233,
+   "kcal_mape_top1": 0.23927580772261625,
+   "kcal_n": 184
+  },
+  "tw": {
+   "n": 22,
+   "logged_any": 1.0,
+   "item_top1": 0.5909090909090909,
+   "item_top3": 0.8636363636363636,
+   "whole_top1": 0.5909090909090909,
+   "whole_top3": 0.8636363636363636
+  }
+ },
+ "calibration": [
+  [
+   0,
+   0.3,
+   0,
+   null
+  ],
+  [
+   0.3,
+   0.4,
+   38,
+   0.34210526315789475
+  ],
+  [
+   0.4,
+   0.5,
+   92,
+   0.2826086956521739
+  ],
+  [
+   0.5,
+   0.6,
+   65,
+   0.38461538461538464
+  ],
+  [
+   0.6,
+   0.7,
+   39,
+   0.5384615384615384
+  ],
+  [
+   0.7,
+   0.8,
+   24,
+   0.7083333333333334
+  ],
+  [
+   0.8,
+   1.01,
+   42,
+   0.9047619047619048
+  ]
+ ],
+ "gate_curve": [
+  {
+   "p_neg_max": 0.005,
+   "neg_user": 0.0,
+   "neg_extra": 0.0,
+   "drinks_logged": 0.7692307692307693,
+   "drinks_as_drink": 0.7435897435897436,
+   "uec_recall": 0.46701846965699206,
+   "food101_logged": 0.9837837837837838,
+   "tw_logged": 0.9545454545454546
+  },
+  {
+   "p_neg_max": 0.02,
+   "neg_user": 0.0,
+   "neg_extra": 0.03333333333333333,
+   "drinks_logged": 0.8461538461538461,
+   "drinks_as_drink": 0.8205128205128205,
+   "uec_recall": 0.5329815303430079,
+   "food101_logged": 0.9945945945945946,
+   "tw_logged": 1.0
+  },
+  {
+   "p_neg_max": 0.05,
+   "neg_user": 0.0,
+   "neg_extra": 0.03333333333333333,
+   "drinks_logged": 0.9743589743589743,
+   "drinks_as_drink": 0.9487179487179487,
+   "uec_recall": 0.5382585751978892,
+   "food101_logged": 0.9945945945945946,
+   "tw_logged": 1.0
+  },
+  {
+   "p_neg_max": 0.1,
+   "neg_user": 0.0,
+   "neg_extra": 0.03333333333333333,
+   "drinks_logged": 1.0,
+   "drinks_as_drink": 0.9743589743589743,
+   "uec_recall": 0.5514511873350924,
+   "food101_logged": 0.9945945945945946,
+   "tw_logged": 1.0
+  },
+  {
+   "p_neg_max": 0.2,
+   "neg_user": 0.0,
+   "neg_extra": 0.03333333333333333,
+   "drinks_logged": 1.0,
+   "drinks_as_drink": 0.9743589743589743,
+   "uec_recall": 0.554089709762533,
+   "food101_logged": 0.9945945945945946,
+   "tw_logged": 1.0
+  },
+  {
+   "p_neg_max": 0.3,
+   "neg_user": 0.2,
+   "neg_extra": 0.03333333333333333,
+   "drinks_logged": 1.0,
+   "drinks_as_drink": 0.9743589743589743,
+   "uec_recall": 0.5567282321899736,
+   "food101_logged": 0.9945945945945946,
+   "tw_logged": 1.0
+  },
+  {
+   "p_neg_max": 0.5,
+   "neg_user": 0.2,
+   "neg_extra": 0.16666666666666666,
+   "drinks_logged": 1.0,
+   "drinks_as_drink": 0.9743589743589743,
+   "uec_recall": 0.5620052770448549,
+   "food101_logged": 0.9945945945945946,
+   "tw_logged": 1.0
+  },
+  {
+   "p_neg_max": 1.0,
+   "neg_user": 0.4,
+   "neg_extra": 0.2,
+   "drinks_logged": 1.0,
+   "drinks_as_drink": 0.9743589743589743,
+   "uec_recall": 0.5672823218997362,
+   "food101_logged": 0.9945945945945946,
+   "tw_logged": 1.0
+  }
+ ],
+ "food_min_curve": [
+  {
+   "p_food_min": 0.0,
+   "neg_user": 0.0,
+   "neg_extra": 0.06666666666666667,
+   "drinks_logged": 1.0,
+   "uec_recall": 0.5778364116094987,
+   "food101_logged": 1.0,
+   "tw_logged": 1.0
+  },
+  {
+   "p_food_min": 0.02,
+   "neg_user": 0.0,
+   "neg_extra": 0.03333333333333333,
+   "drinks_logged": 1.0,
+   "uec_recall": 0.5778364116094987,
+   "food101_logged": 1.0,
+   "tw_logged": 1.0
+  },
+  {
+   "p_food_min": 0.05,
+   "neg_user": 0.0,
+   "neg_extra": 0.03333333333333333,
+   "drinks_logged": 1.0,
+   "uec_recall": 0.5514511873350924,
+   "food101_logged": 0.9945945945945946,
+   "tw_logged": 1.0
+  },
+  {
+   "p_food_min": 0.1,
+   "neg_user": 0.0,
+   "neg_extra": 0.0,
+   "drinks_logged": 0.9487179487179487,
+   "uec_recall": 0.43007915567282323,
+   "food101_logged": 0.972972972972973,
+   "tw_logged": 0.9545454545454546
+  },
+  {
+   "p_food_min": 0.15,
+   "neg_user": 0.0,
+   "neg_extra": 0.0,
+   "drinks_logged": 0.7948717948717948,
+   "uec_recall": 0.3087071240105541,
+   "food101_logged": 0.8486486486486486,
+   "tw_logged": 0.9090909090909091
+  }
+ ],
+ "alternatives": {
+  "contain_off(1.01),iou0.6": {
+   "neg_user.all": [
+    0.0,
+    0.0,
+    10
+   ],
+   "neg_extra.all": [
+    0.03333333333333333,
+    0.03333333333333333,
+    30
+   ],
+   "neg_extra.tune": [
+    0.0,
+    0.0,
+    15
+   ],
+   "neg_extra.held": [
+    0.06666666666666667,
+    0.06666666666666667,
+    15
+   ],
+   "drinks.all": [
+    1.0,
+    1.0,
+    39
+   ],
+   "drinks.tune": [
+    1.0,
+    1.0,
+    20
+   ],
+   "drinks.held": [
+    1.0,
+    1.0,
+    19
+   ],
+   "uec": {
+    "recall": 0.6701846965699209,
+    "precision": 0.6759259259259259,
+    "items_per_img": 3.375,
+    "gt_per_img": 2.9609375
+   },
+   "food101": {
+    "n": 300,
+    "logged_any": 0.9966666666666667,
+    "n_mappable": 185,
+    "logged_mappable": 1.0,
+    "whole_top1": 0.5945945945945946,
+    "whole_top5": 0.8540540540540541,
+    "item_top1": 0.6108108108108108,
+    "item_topK": 0.8,
+    "kcal_mape_mix_median": 1.0035229093235274,
+    "kcal_mape_top1": 1.0,
+    "kcal_n": 185
+   },
+   "tw": {
+    "n": 22,
+    "logged_any": 1.0,
+    "item_top1": 0.5909090909090909,
+    "item_top3": 0.9090909090909091,
+    "whole_top1": 0.5909090909090909,
+    "whole_top3": 0.8636363636363636
+   }
+  },
+  "no_neg_classes(cs=A2)": {
+   "neg_user.all": [
+    0.1,
+    0.1,
+    10
+   ],
+   "neg_extra.all": [
+    0.03333333333333333,
+    0.03333333333333333,
+    30
+   ],
+   "neg_extra.tune": [
+    0.0,
+    0.0,
+    15
+   ],
+   "neg_extra.held": [
+    0.06666666666666667,
+    0.06666666666666667,
+    15
+   ],
+   "drinks.all": [
+    1.0,
+    0.9743589743589743,
+    39
+   ],
+   "drinks.tune": [
+    1.0,
+    0.95,
+    20
+   ],
+   "drinks.held": [
+    1.0,
+    1.0,
+    19
+   ],
+   "uec": {
+    "recall": 0.554089709762533,
+    "precision": 0.6106194690265486,
+    "items_per_img": 2.6484375,
+    "gt_per_img": 2.9609375
+   },
+   "food101": {
+    "n": 300,
+    "logged_any": 0.9933333333333333,
+    "n_mappable": 185,
+    "logged_mappable": 0.9945945945945946,
+    "whole_top1": 0.5945945945945946,
+    "whole_top5": 0.8540540540540541,
+    "item_top1": 0.5978260869565217,
+    "item_topK": 0.782608695652174,
+    "kcal_mape_mix_median": 0.2504192522736233,
+    "kcal_mape_top1": 0.23927580772261625,
+    "kcal_n": 184
+   },
+   "tw": {
+    "n": 22,
+    "logged_any": 1.0,
+    "item_top1": 0.5909090909090909,
+    "item_top3": 0.8636363636363636,
+    "whole_top1": 0.5909090909090909,
+    "whole_top3": 0.8636363636363636
+   }
+  },
+  "fallback_never": {
+   "neg_user.all": [
+    0.0,
+    0.0,
+    10
+   ],
+   "neg_extra.all": [
+    0.03333333333333333,
+    0.03333333333333333,
+    30
+   ],
+   "neg_extra.tune": [
+    0.0,
+    0.0,
+    15
+   ],
+   "neg_extra.held": [
+    0.06666666666666667,
+    0.06666666666666667,
+    15
+   ],
+   "drinks.all": [
+    1.0,
+    0.9743589743589743,
+    39
+   ],
+   "drinks.tune": [
+    1.0,
+    0.95,
+    20
+   ],
+   "drinks.held": [
+    1.0,
+    1.0,
+    19
+   ],
+   "uec": {
+    "recall": 0.5514511873350924,
+    "precision": 0.6186186186186187,
+    "items_per_img": 2.6015625,
+    "gt_per_img": 2.9609375
+   },
+   "food101": {
+    "n": 300,
+    "logged_any": 0.9866666666666667,
+    "n_mappable": 185,
+    "logged_mappable": 0.9837837837837838,
+    "whole_top1": 0.5945945945945946,
+    "whole_top5": 0.8540540540540541,
+    "item_top1": 0.5934065934065934,
+    "item_topK": 0.7802197802197802,
+    "kcal_mape_mix_median": 0.25657170927487905,
+    "kcal_mape_top1": 0.24601339637509845,
+    "kcal_n": 182
+   },
+   "tw": {
+    "n": 22,
+    "logged_any": 1.0,
+    "item_top1": 0.5909090909090909,
+    "item_top3": 0.8636363636363636,
+    "whole_top1": 0.5909090909090909,
+    "whole_top3": 0.8636363636363636
+   }
+  }
+ }
+}

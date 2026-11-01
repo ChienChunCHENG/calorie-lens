@@ -10,3 +10,12 @@ build/
 # meal photos and datasets never go in git
 dataset/
 dumps/
+
+# YOLOE text encoder weights (TorchScript, ~600 MB), re-downloaded by ultralytics
+ml/snap/mobileclip_blt.ts
+*.onnx.data
+
+# Parity fixtures embed eval photos (user photos, UEC research-only, Wikimedia): local only, rebuilt by ml/snap/make_parity.py
+web/test/fixtures/
+# portion experiment in progress
+ml/snap/portion/

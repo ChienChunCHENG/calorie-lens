@@ -1,234 +1,322 @@
-import { Detector, Backend } from './detector';
-import { IouTracker } from './tracker';
-import type { Track } from './tracker';
-import { Assignments } from './assign.ts';
-import { data, dishIds } from './data';
-import { autoDishId, defaultItem, safeEstimate, totalOf, WHOLE_DISHES } from './meal.ts';
-import { suppressContained } from './yolo';
-import type { Item, ItemEstimate, SugarLevel } from './meal.ts';
-import { formatRange } from '../../core/ts/rangeEngine.ts';
+import './style.css';
+import { decodeFile } from './decode.ts';
+import { deleteMeal, exportBackup, getAllMeals, importBackup, putMeal, storageOk } from './db.ts';
+import { displayName, fmtKcal, fmtRange, fmtTime, round10 } from './format.ts';
+import { dayKey, dayTotal, mealTotal, mealsOfDay, parseDayKey, removeItem, shiftDay, weekMedians } from './log.ts';
+import type { LogItem, Meal } from './log.ts';
+import type { Analysis } from './pipeline.ts';
+import type { InMsg, OutMsg } from './worker.ts';
 
-const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const video = $<HTMLVideoElement>('video'), canvas = $<HTMLCanvasElement>('overlay');
-const hud = $('hud'), msg = $('msg'), startBtn = $<HTMLButtonElement>('start'), backendSel = $<HTMLSelectElement>('backend');
-const ctx = canvas.getContext('2d')!;
-const q = new URLSearchParams(location.search);
-const imgsz = Math.max(32, Math.round((parseInt(q.get('imgsz') || '416', 10) || 416) / 32) * 32);
-const modelUrl = q.get('model') || `${import.meta.env.BASE_URL}models/detector.onnx`;
-const TARGET_MS = 1000 / Math.min(10, Math.max(1, parseFloat(q.get('hz') || '8') || 8));
+const BASE = import.meta.env.BASE_URL;
+const DISCLAIMER = 'Estimates only, not medical advice. Names may be wrong about half the time; ranges account for that.';
 
-const tracker = new IouTracker();
-const assignments = new Assignments();
-let noNumbers = false;
-let detector: Detector | null = null;
-let modelStatus = 'not loaded';
-let running = false;
-const infMs: number[] = [];
-const doneTimes: number[] = [];
-let startTime = 0;
+// ---------- state ----------
+type Status =
+  | { kind: 'idle' }
+  | { kind: 'progress'; phase: string; loaded?: number; total?: number }
+  | { kind: 'error'; message: string }
+  | { kind: 'none'; photo: string; info: string }
+  | { kind: 'done'; photo: string; meal: Meal; backend: string };
 
-function showMsg(t: string) { msg.textContent = t; }
+let meals: Meal[] = [];
+let today = dayKey(Date.now());
+let day = today;
+let status: Status = { kind: 'idle' };
+let storageErr: string | null = null;
+let busy = false;
+let sheetOpen = false;
+let sheetNote = '';
 
-// ---- canvas sizing / mapping (video uses object-fit: cover) ----
-let cssW = 0, cssH = 0;
-function resizeCanvas() {
-  const r = video.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  cssW = r.width; cssH = r.height;
-  canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(cssH * dpr);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
-new ResizeObserver(resizeCanvas).observe(video);
-window.addEventListener('orientationchange', resizeCanvas);
-video.addEventListener('loadedmetadata', resizeCanvas);
+const thumbUrls = new Map<string, string>();
+const thumbUrl = (m: Meal) => {
+  if (!m.thumb) return '';
+  let u = thumbUrls.get(m.id);
+  if (!u) { u = URL.createObjectURL(m.thumb); thumbUrls.set(m.id, u); }
+  return u;
+};
 
-function mapping() {
-  const vw = video.videoWidth || 1, vh = video.videoHeight || 1;
-  const s = Math.max(cssW / vw, cssH / vh);
-  return { s, ox: (cssW - vw * s) / 2, oy: (cssH - vh * s) / 2 };
-}
-
-// ---- camera ----
-async function startCamera() {
-  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-    showMsg('Camera needs a secure context (HTTPS or localhost). Open this page via the https:// tunnel URL.');
-    return;
+// ---------- tiny DOM helper ----------
+type Child = Node | string | null | false | undefined;
+function h<K extends keyof HTMLElementTagNameMap>(tag: K, props: Record<string, any> = {}, ...kids: Child[]): HTMLElementTagNameMap[K] {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (v == null || v === false) continue;
+    if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (k === 'class') el.className = v;
+    else if (k === 'style') el.setAttribute('style', v);
+    else el.setAttribute(k, v === true ? '' : String(v));
   }
+  for (const c of kids) if (c) el.append(c as Node | string);
+  return el;
+}
+
+// ---------- worker ----------
+let worker: Worker | null = null;
+let seq = 0;
+let evalSeq = 0;
+let pending: { id: number; resolve(m: Extract<OutMsg, { type: 'result' }>): void; reject(e: Error & { code?: string }): void } | null = null;
+
+function getWorker(): Worker {
+  if (worker) return worker;
+  const w = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
+  w.onmessage = (ev: MessageEvent<OutMsg>) => {
+    const m = ev.data;
+    if (!pending || m.id !== pending.id) return;
+    if (m.type === 'progress') { status = { kind: 'progress', phase: m.phase, loaded: m.loaded, total: m.total }; renderStatus(); }
+    else if (m.type === 'result') { const p = pending; pending = null; p.resolve(m); }
+    else { const p = pending; pending = null; p.reject(Object.assign(new Error(m.message), { code: m.code })); }
+  };
+  w.onerror = (ev) => {
+    const p = pending; pending = null; worker = null;
+    p?.reject(new Error(ev.message || 'worker crashed'));
+  };
+  worker = w;
+  return w;
+}
+
+function runWorker(payload: Omit<InMsg, 'type' | 'id' | 'base'>): Promise<Extract<OutMsg, { type: 'result' }>> {
+  return new Promise((resolve, reject) => {
+    const id = ++seq;
+    pending = { id, resolve, reject };
+    const ortBase = new URLSearchParams(location.search).get('ortbase') ?? undefined;
+    const msg: InMsg = { type: 'analyze', id, base: BASE, ortBase, ...payload };
+    const transfer: Transferable[] = payload.decoded ? [payload.decoded.rgba.buffer] : [];
+    getWorker().postMessage(msg, transfer);
+  });
+}
+
+// ---------- actions ----------
+async function snap(file: File | undefined) {
+  if (!file || busy) return;
+  busy = true;
+  const photo = URL.createObjectURL(file);
+  const t0 = performance.now();
+  status = { kind: 'progress', phase: 'decode' };
+  render();
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false,
-    });
-    video.srcObject = stream;
-    await video.play();
-    startBtn.style.display = 'none';
-    showMsg('');
-    resizeCanvas();
-    startTime = performance.now();
-    await loadModel(backendSel.value as Backend);
-    running = true;
-    void inferLoop();
-  } catch (e) {
-    const err = e as DOMException;
-    if (err.name === 'NotAllowedError' || err.name === 'SecurityError')
-      showMsg('Camera permission denied. On iPhone: Settings > Safari > Camera, allow, then reload.');
-    else if (err.name === 'NotFoundError') showMsg('No camera found on this device.');
-    else showMsg(`Camera error: ${err.name}: ${err.message}`);
-  }
-}
-startBtn.addEventListener('click', () => { void startCamera(); });
-
-// ---- model ----
-async function loadModel(b: Backend) {
-  running = false;
-  loopGen++;
-  infMs.length = 0; doneTimes.length = 0;
-  tracker.tracks = [];
-  if (!(await Detector.modelExists(modelUrl))) { detector = null; modelStatus = 'camera-only (no model)'; return; }
-  modelStatus = 'loading model...';
-  try {
-    const d = new Detector(modelUrl, imgsz);
-    await d.init(b);
-    detector = d; modelStatus = `ok (imgsz ${imgsz})`;
-  } catch (e) {
-    detector = null; modelStatus = `model error: ${(e as Error).message}`;
-  }
-}
-backendSel.addEventListener('change', async () => {
-  if (!video.srcObject) return;
-  await loadModel(backendSel.value as Backend);
-  running = true; void inferLoop();
-});
-
-// ---- inference loop: latest-frame-wins, frames are never queued ----
-let loopGen = 0;
-async function inferLoop() {
-  const gen = ++loopGen;
-  while (running && gen === loopGen && detector) {
-    const t0 = performance.now();
-    if (video.readyState >= 2 && video.videoWidth) {
-      try {
-        const wholeCls = new Set(detector.labels.flatMap((l, i) => (WHOLE_DISHES.has(l) ? [i] : [])));
-        const dets = suppressContained(await detector.detect(video), wholeCls);
-        const t1 = performance.now();
-        infMs.push(t1 - t0); if (infMs.length > 20) infMs.shift();
-        doneTimes.push(t1);
-        if (gen === loopGen) tracker.update(dets);
-      } catch (e) {
-        modelStatus = `inference error: ${(e as Error).message}`; running = false; break;
-      }
+    let res;
+    try { res = await runWorker({ file }); }
+    catch (e: any) {
+      if (e?.code !== 'NO_CANVAS') throw e;
+      status = { kind: 'progress', phase: 'decode' }; renderStatus();
+      res = await runWorker({ decoded: await decodeFile(file) }); // older iOS: decode on the main thread
     }
-    const wait = TARGET_MS - (performance.now() - t0);
-    await new Promise(r => setTimeout(r, Math.max(0, wait)));
-  }
-}
-
-// ---- render loop at rAF rate, from smoothed tracks ----
-const rawLabel = (t: Track) => detector?.labels[t.cls] ?? String(t.cls);
-const autoFor = (l: string | undefined): Item | null => { const id = autoDishId(l, data); return id ? defaultItem(data, id) : null; };
-
-function estimateOf(item: Item): ItemEstimate | null { return safeEstimate(data, item); }
-const FLAG_TEXT: Record<string, string> = { portion_default: '≈ typical portion', low_confidence: '± wide' };
-const SUGAR_ZH: Record<SugarLevel, string> = { full: '全糖', less: '少糖', half: '半糖', light: '微糖', none: '無糖' };
-
-function roundRect(x: number, y: number, w: number, h: number, r: number) {
-  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
-}
-
-/** Draws a label pill above (or inside, when no room above) the box; lines = [main, sub?]. */
-function drawLabel(x: number, y: number, lines: string[], bg: string, alpha: number) {
-  const mainFont = '700 15px -apple-system, system-ui, "PingFang TC", sans-serif';
-  const subFont = '500 11px -apple-system, system-ui, sans-serif';
-  ctx.font = mainFont; const w1 = ctx.measureText(lines[0]).width;
-  let w2 = 0;
-  if (lines[1]) { ctx.font = subFont; w2 = ctx.measureText(lines[1]).width; }
-  const w = Math.min(cssW - 8, Math.max(w1, w2) + 14), h = lines[1] ? 38 : 24;
-  const lx = Math.max(4, Math.min(x, cssW - w - 4));
-  const top = 56; // keep clear of the HUD pill
-  const ly = y - h - 2 < top ? Math.max(y + 2, top) : y - h - 2;
-  ctx.globalAlpha = alpha; ctx.fillStyle = bg; roundRect(lx, ly, w, h, 8); ctx.fill();
-  ctx.fillStyle = '#fff'; ctx.textBaseline = 'top';
-  ctx.font = mainFont; ctx.fillText(lines[0], lx + 7, ly + 4, w - 10);
-  if (lines[1]) { ctx.font = subFont; ctx.globalAlpha = alpha * 0.8; ctx.fillText(lines[1], lx + 7, ly + 22, w - 10); }
-  ctx.globalAlpha = 1;
-}
-
-function itemLines(item: Item): string[] {
-  const dish = data.dishes[item.dishId];
-  const est = noNumbers ? null : estimateOf(item);
-  const main = est ? `${dish.zh} ${formatRange(est.lo, est.hi)} kcal` : dish.zh;
-  if (!est) return [main];
-  const sub: string[] = [];
-  if (dish.kind === 'drink') sub.push(`${SUGAR_ZH[item.sugar]}?`);
-  for (const f of est.flags) if (FLAG_TEXT[f]) sub.push(FLAG_TEXT[f]);
-  return sub.length ? [main, sub.join(' · ')] : [main];
-}
-
-let last = performance.now();
-function render(now: number) {
-  const dt = now - last; last = now;
-  tracker.step(dt);
-  const vis = tracker.visible();
-  assignments.sync(vis.map(t => ({ id: t.id, box: t.target, label: rawLabel(t) })), now, autoFor);
-  ctx.clearRect(0, 0, cssW, cssH);
-  const { s, ox, oy } = mapping();
-  ctx.lineWidth = 2;
-  for (const t of vis) {
-    const x = t.x1 * s + ox, y = t.y1 * s + oy, w = (t.x2 - t.x1) * s, h = (t.y2 - t.y1) * s;
-    const item = assignments.get(t.id);
-    if (item) {
-      const hue = (dishIds.indexOf(item.dishId) * 41 + 120) % 360;
-      ctx.strokeStyle = `hsl(${hue} 85% 55%)`; ctx.strokeRect(x, y, w, h);
-      drawLabel(x, y, itemLines(item), `hsl(${hue} 70% 28%)`, 0.92);
+    const a: Analysis = res.result;
+    // Read by the offline evaluation harness (ml/snap/eval_web.py); harmless in normal use.
+    (window as any).__clLast = { n: ++evalSeq, ms: Math.round(performance.now() - t0), backend: res.backend, result: a };
+    if (a.items.length === 0) {
+      status = { kind: 'none', photo, info: `boxes ${a.nBoxes}, empty/non-food ${a.skipped.negative}, unsure ${a.skipped.low_food}` };
+    } else {
+      const meal: Meal = { id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, ts: Date.now(), thumb: res.thumb, items: a.items };
+      try { await putMeal(meal); storageErr = null; } catch (e: any) { storageErr = String(e?.message ?? e); }
+      meals.push(meal);
+      today = dayKey(Date.now()); day = today;
+      status = { kind: 'done', photo, meal, backend: res.backend };
     }
-  }
-  updateHud(now);
-  updateBar(now);
-  requestAnimationFrame(render);
+  } catch (e: any) {
+    (window as any).__clLast = { n: ++evalSeq, error: String(e?.message ?? e) };
+    status = { kind: 'error', message: String(e?.message ?? e) };
+  } finally { busy = false; render(); }
 }
-requestAnimationFrame(render);
 
-// ---- bottom meal bar ----
-const totalEl = $('total'), nonumBtn = $<HTMLButtonElement>('nonum'), clearBtn = $<HTMLButtonElement>('clear');
-let barAt = 0, barKey = '';
-function updateBar(now: number) {
-  if (now - barAt < 200) return;
-  barAt = now;
-  const items = assignments.activeItems();
-  const ests = items.map(estimateOf).filter((e): e is ItemEstimate => e !== null);
-  let big: string, sub: string;
-  if (!items.length) { big = 'Point at your meal'; sub = 'Dishes are recognised automatically'; }
-  else if (noNumbers || !ests.length) { big = `${items.length} item${items.length > 1 ? 's' : ''}`; sub = noNumbers ? 'kcal hidden' : ''; }
-  else {
-    const m = totalOf(ests);
-    big = `${formatRange(m.lo, m.hi)} kcal`;
-    sub = `Meal total, ${items.length} item${items.length > 1 ? 's' : ''} (median ${Math.round(m.med / 5) * 5})`;
-  }
-  const key = big + '|' + sub;
-  if (key === barKey) return;
-  barKey = key;
-  totalEl.children[0].textContent = big; totalEl.children[1].textContent = sub;
+async function removeMeal(id: string) {
+  if (!confirm('刪除這一餐？ Delete this meal?')) return;
+  try { await deleteMeal(id); } catch (e: any) { storageErr = String(e?.message ?? e); }
+  meals = meals.filter(m => m.id !== id);
+  const u = thumbUrls.get(id); if (u) { URL.revokeObjectURL(u); thumbUrls.delete(id); }
+  if (status.kind === 'done' && status.meal.id === id) status = { kind: 'idle' };
+  render();
 }
-nonumBtn.addEventListener('click', () => {
-  noNumbers = !noNumbers; nonumBtn.classList.toggle('on', noNumbers); nonumBtn.textContent = noNumbers ? 'Show kcal' : 'Hide kcal'; barAt = 0;
-});
-clearBtn.addEventListener('click', () => { assignments.clear(); barAt = 0; });
-$('hudpill').addEventListener('click', () => { $('hudwrap').classList.toggle('open'); });
 
-// ---- HUD ----
-function median(a: number[]) { if (!a.length) return NaN; const b = [...a].sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; }
-let hudAt = 0;
-function updateHud(now: number) {
-  if (now - hudAt < 250) return;
-  hudAt = now;
-  while (doneTimes.length && now - doneTimes[0] > 3000) doneTimes.shift();
-  const hz = doneTimes.length > 1 ? (doneTimes.length - 1) / ((doneTimes[doneTimes.length - 1] - doneTimes[0]) / 1000) : 0;
-  const mem = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
-  const heap = mem ? `${(mem.usedJSHeapSize / 1048576).toFixed(0)} MB` : 'n/a';
-  const el = startTime ? Math.floor((now - startTime) / 1000) : 0;
-  const mm = String(Math.floor(el / 60)).padStart(2, '0'), ss = String(el % 60).padStart(2, '0');
-  const m = median(infMs);
-  hud.textContent = `backend: ${detector ? detector.backend : '-'}  model: ${modelStatus}\n` +
-    `inference: ${isNaN(m) ? '-' : m.toFixed(1)} ms (median/20)  rate: ${hz.toFixed(1)} Hz  tracks: ${tracker.visible().length}\n` +
-    `heap: ${heap}  time: ${mm}:${ss}  isolated: ${self.crossOriginIsolated}`;
+async function removeOneItem(m: Meal, itemId: string) {
+  const next = removeItem(m, itemId);
+  if (!next) return removeMeal(m.id);
+  try { await putMeal(next); } catch (e: any) { storageErr = String(e?.message ?? e); }
+  meals = meals.map(x => (x.id === m.id ? next : x));
+  if (status.kind === 'done' && status.meal.id === m.id) status = { ...status, meal: next };
+  render();
 }
+
+// ---------- views ----------
+const phaseText: Record<string, string> = {
+  decode: '讀取照片… Reading photo', init: '載入模型… Starting models', locate: '找出食物… Finding food', classify: '辨識中… Naming items',
+};
+const mb = (n: number) => (n / 1048576).toFixed(1);
+
+function progressCard(s: Extract<Status, { kind: 'progress' }>): HTMLElement {
+  const dl = s.phase === 'download';
+  const pct = dl && s.total ? Math.min(100, (100 * (s.loaded ?? 0)) / s.total) : 0;
+  const bar = h('div', { class: 'progress' + (dl && s.total ? '' : ' indet') }, h('i', { style: dl && s.total ? `width:${pct}%` : '' }));
+  return h('div', { class: 'card', role: 'status' },
+    h('div', {}, dl ? '下載模型（僅第一次）… Downloading models (first time only)' : phaseText[s.phase] ?? s.phase),
+    bar,
+    dl && s.total ? h('div', { class: 'muted' }, `${mb(s.loaded ?? 0)} / ${mb(s.total)} MB`) : null,
+    dl ? h('div', { class: 'muted' }, '之後離線也能用 Cached for offline use afterwards') : null);
+}
+
+function itemRow(m: Meal, it: LogItem, deletable = true): HTMLElement {
+  return h('div', { class: 'row' },
+    h('div', { class: 'name' }, displayName(it.name, it.unsure),
+      it.name !== it.nameEn ? h('small', {}, it.nameEn) : null),
+    h('div', { class: 'kcal' }, fmtKcal(it)),
+    deletable ? h('button', { class: 'x', 'aria-label': `刪除 ${it.name} Delete item`, onClick: () => removeOneItem(m, it.id) }, '✕') : null);
+}
+
+function resultCard(s: Extract<Status, { kind: 'done' }>): HTMLElement {
+  const m = s.meal, tot = mealTotal(m)!;
+  const photo = h('div', { class: 'photo' }, h('img', { src: s.photo, alt: '' }));
+  m.items.forEach(it => {
+    const [x1, y1, x2, y2] = it.box;
+    const first = y1 < 0.06;
+    photo.append(h('div', { class: 'box' + (first ? ' first' : ''), style: `left:${x1 * 100}%;top:${y1 * 100}%;width:${(x2 - x1) * 100}%;height:${(y2 - y1) * 100}%` },
+      h('span', {}, `${displayName(it.name, it.unsure)} ${fmtRange(it)}`)));
+  });
+  return h('div', { class: 'card' },
+    photo,
+    h('div', { style: 'margin-top:8px' }, ...m.items.map(it => itemRow(m, it))),
+    h('div', { class: 'total' }, h('span', {}, '這餐 This meal'), h('span', {}, fmtKcal(tot))),
+    h('div', { class: 'muted', style: 'margin-top:6px' }, storageErr ? '' : `✓ 已記錄 Saved · ${fmtTime(m.ts)} · ${s.backend}`),
+    h('div', { class: 'btns', style: 'margin-top:8px' }, h('button', { class: 'btn', onClick: () => { status = { kind: 'idle' }; render(); } }, '關閉 Dismiss')));
+}
+
+function statusCard(): HTMLElement | null {
+  switch (status.kind) {
+    case 'idle': return null;
+    case 'progress': return progressCard(status);
+    case 'error':
+      return h('div', { class: 'card' }, h('div', { class: 'err' }, '發生錯誤 Something went wrong'),
+        h('div', { class: 'muted', style: 'overflow-wrap:anywhere' }, status.message),
+        h('div', { class: 'btns', style: 'margin-top:8px' }, h('button', { class: 'btn', onClick: () => { status = { kind: 'idle' }; render(); } }, 'OK')));
+    case 'none':
+      return h('div', { class: 'card' }, h('div', { class: 'photo' }, h('img', { src: status.photo, alt: '' })),
+        h('div', { class: 'warn', style: 'margin-top:8px;font-weight:600' }, '沒有認出食物，未記錄。 No food recognised; nothing logged.'),
+        h('div', { class: 'muted' }, status.info),
+        h('div', { class: 'btns', style: 'margin-top:8px' }, h('button', { class: 'btn', onClick: () => { status = { kind: 'idle' }; render(); } }, 'OK')));
+    case 'done': return resultCard(status);
+  }
+}
+
+const fmtDay = (k: string) => parseDayKey(k).toLocaleDateString('zh-TW', { month: 'long', day: 'numeric', weekday: 'short' });
+
+function mealCard(m: Meal): HTMLElement {
+  const tot = mealTotal(m)!;
+  return h('div', { class: 'card meal' },
+    m.thumb ? h('img', { class: 'thumb', src: thumbUrl(m), alt: '' }) : h('div', { class: 'thumb' }),
+    h('div', { class: 'body' },
+      h('div', { class: 'head' }, h('span', {}, fmtTime(m.ts)), h('span', {}, fmtKcal(tot))),
+      ...m.items.map(it => itemRow(m, it)),
+      h('div', { class: 'tools' }, h('button', { class: 'link', onClick: () => removeMeal(m.id) }, '🗑 刪除這餐 Delete meal'))));
+}
+
+function dayView(): HTMLElement[] {
+  const ms = mealsOfDay(meals, day), t = dayTotal(ms);
+  const out: HTMLElement[] = [];
+  out.push(h('div', { class: 'card daytotal' },
+    h('div', { class: 'muted' }, day === today ? '今天合計 Today' : '當日合計 Day total'),
+    t ? h('div', { class: 'big' }, fmtRange(t), h('small', {}, ' kcal')) : h('div', { class: 'big', style: 'color:var(--muted)' }, '—'),
+    t ? h('div', { class: 'muted' }, `中位數 median ≈ ${round10(t.p50)} kcal · ${ms.length} 餐 meals`) : h('div', { class: 'muted' }, '還沒有紀錄 Nothing logged')));
+  if (!ms.length) out.push(h('div', { class: 'empty' }, '拍一張餐點照片開始吧 Snap a meal to start'));
+  for (const m of ms) out.push(mealCard(m));
+  // 7-day bars of daily medians
+  const wk = weekMedians(meals, day), max = Math.max(1, ...wk.map(w => w.median ?? 0));
+  out.push(h('div', { class: 'card' }, h('div', { style: 'font-weight:700' }, '近 7 天（中位數）Last 7 days (median)'),
+    h('div', { class: 'week' }, ...wk.map(w => h('button', { class: 'd' + (w.key === day ? ' sel' : ''), 'aria-label': w.key, onClick: () => { day = w.key; render(); } },
+      h('em', {}, w.median == null ? '' : String(round10(w.median))),
+      h('i', { style: `height:${w.median == null ? 3 : Math.max(4, (w.median / max) * 84)}px` }),
+      h('span', {}, parseDayKey(w.key).toLocaleDateString('zh-TW', { weekday: 'narrow' })))))));
+  return out;
+}
+
+// ---------- settings sheet ----------
+function sheet(): HTMLElement {
+  const note = h('div', { class: 'muted', role: 'status' }, sheetNote);
+  const about = h('pre', { class: 'about' }, '…');
+  fetch(`${BASE}models/ATTRIBUTION.md`).then(async r => {
+    const t = await r.text();
+    about.textContent = r.ok && !/^\s*<!doctype|^\s*<html/i.test(t) ? t : '(ATTRIBUTION.md not available)';
+  }).catch(() => { about.textContent = '(ATTRIBUTION.md not available offline)'; });
+  const importInput = h('input', { type: 'file', accept: 'application/json,.json', class: 'sr', onChange: async (ev: Event) => {
+    const f = (ev.target as HTMLInputElement).files?.[0]; if (!f) return;
+    try { const n = await importBackup(await f.text()); meals = await getAllMeals(); sheetNote = `已匯入 ${n} 餐 Imported ${n} meals`; render(true); }
+    catch (e: any) { note.textContent = `匯入失敗 Import failed: ${e?.message ?? e}`; }
+    (ev.target as HTMLInputElement).value = '';
+  } });
+  const close = () => { sheetOpen = false; render(); };
+  const box = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '設定 Settings' },
+    h('div', { class: 'row', style: 'border:0' }, h('h2', { style: 'flex:1' }, '設定 Settings'), h('button', { class: 'x', 'aria-label': 'Close', onClick: close }, '✕')),
+    h('h3', {}, '備份 Backup'),
+    h('div', { class: 'btns' },
+      h('button', { class: 'btn', onClick: async () => {
+        try {
+          const blob = new Blob([await exportBackup(meals)], { type: 'application/json' });
+          const a = h('a', { href: URL.createObjectURL(blob), download: `calorie-lens-${dayKey(Date.now())}.json` });
+          document.body.append(a); a.click(); a.remove();
+          note.textContent = `已匯出 ${meals.length} 餐 Exported ${meals.length} meals`;
+        } catch (e: any) { note.textContent = `匯出失敗 Export failed: ${e?.message ?? e}`; }
+      } }, '⬇ 匯出 Export JSON'),
+      h('button', { class: 'btn', onClick: () => importInput.click() }, '⬆ 匯入 Import JSON'), importInput),
+    note,
+    h('h3', {}, '關於與資料來源 About & data sources'),
+    h('p', { class: 'muted' }, DISCLAIMER),
+    h('p', { class: 'muted' }, '照片只在你的手機上處理，不會上傳。 Photos are processed on this phone and never uploaded.'),
+    about);
+  const bg = h('div', { class: 'sheet-bg', onClick: (e: Event) => { if (e.target === bg) close(); } }, box);
+  return bg;
+}
+
+// ---------- render ----------
+let statusEl: HTMLElement | null = null;
+let fileCam: HTMLInputElement, filePick: HTMLInputElement;
+
+function renderStatus() {
+  if (!statusEl) return;
+  const c = statusCard();
+  statusEl.replaceChildren(...(c ? [c] : []));
+}
+
+function render(keepSheet = false) {
+  const app = document.getElementById('app')!;
+  const nextDisabled = day >= today;
+  const st = h("div", { id: "status" }); statusEl = st;
+  app.replaceChildren(
+    h('header', { class: 'top' },
+      h('button', { class: 'icon-btn', 'aria-label': '前一天 Previous day', onClick: () => { day = shiftDay(day, -1); render(); } }, '‹'),
+      h('div', { class: 'date' }, fmtDay(day), h('small', {}, day === today ? '今天 Today' : day)),
+      h('button', { class: 'icon-btn', 'aria-label': '後一天 Next day', disabled: nextDisabled, onClick: () => { day = shiftDay(day, 1); render(); } }, '›'),
+      h('button', { class: 'icon-btn', 'aria-label': '設定 Settings', onClick: () => { sheetOpen = true; render(); } }, '⚙')),
+    h('div', { class: 'capture' },
+      h('button', { class: 'snap', disabled: busy, onClick: () => fileCam.click() }, '📷 拍照記錄', h('small', {}, 'Snap meal')),
+      h('button', { class: 'pick', disabled: busy, onClick: () => filePick.click() }, '從相簿選 Choose photo')),
+    storageErr ? h('div', { class: 'card err' }, `無法使用本機儲存，紀錄不會保存。 Storage unavailable, meals will not be saved. (${storageErr})`) : "",
+    st,
+    ...dayView(),
+    h('div', { class: 'disclaimer' }, DISCLAIMER),
+  );
+  renderStatus();
+  if (sheetOpen && !keepSheet) document.body.append(sheet());
+  else if (sheetOpen && keepSheet) { document.querySelector('.sheet-bg')?.remove(); document.body.append(sheet()); }
+  if (!sheetOpen) document.querySelectorAll('.sheet-bg').forEach(e => e.remove());
+}
+
+// Hidden inputs live outside #app so re-rendering never detaches an input mid-pick.
+function mkInput(capture: boolean): HTMLInputElement {
+  const i = h('input', { type: 'file', accept: 'image/*', class: 'sr', tabindex: '-1', 'aria-hidden': 'true', capture: capture ? 'environment' : false,
+    onChange: () => { const f = i.files?.[0]; i.value = ''; void snap(f); } });
+  document.body.append(i);
+  return i;
+}
+
+async function boot() {
+  fileCam = mkInput(true); filePick = mkInput(false);
+  storageErr = await storageOk();
+  if (!storageErr) { try { meals = await getAllMeals(); } catch (e: any) { storageErr = String(e?.message ?? e); } }
+  render();
+  document.addEventListener('visibilitychange', () => {
+    const t = dayKey(Date.now());
+    if (!document.hidden && t !== today) { if (day === today) day = t; today = t; render(); }
+  });
+  if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    navigator.serviceWorker.register(`${BASE}sw.js`).catch(() => { /* optional */ });
+  }
+}
+void boot();
