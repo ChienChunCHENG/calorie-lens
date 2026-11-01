@@ -1,0 +1,8 @@
+{
+ "lambda": 0.5,
+ "temper": 1.0,
+ "alpha": 20.0,
+ "agg": "rep",
+ "gate": "raw (gate uses the prior-free softmax; prior only reorders food rows)",
+ "n_display": 800
+}

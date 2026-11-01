@@ -1,9 +1,12 @@
 // Pure zero-shot classification maths: L2 norm, similarity, softmax, gate, top-K candidate selection.
 export interface VocabRow {
-  id: string; en: string; zh?: string; kcal100: number; portion_g: [number, number, number]; cat?: string; neg?: true;
+  id: string; en: string; display?: string; zh?: string; kcal100: number; portion_g: [number, number, number]; cat?: string; neg?: true;
+  /** Centred log commonness prior (ml/snap/prior); 0 or absent = neutral. */
+  lp?: number;
 }
 export interface Gate { p_neg_max: number; p_food_min: number }
-export interface Mix { k: number; cum: number; sure: number }
+/** lambda weights the commonness prior when ranking food candidates (0 = pure zero-shot). */
+export interface Mix { k: number; cum: number; sure: number; lambda?: number }
 export interface Cand { idx: number; p: number }
 export type Skip = 'negative' | 'low_food';
 export interface Classified {
@@ -47,12 +50,17 @@ export function classify(sims: Float32Array, vocab: readonly VocabRow[], logitSc
   const p = softmax(sims, logitScale);
   let pNeg = 0, pFoodSum = 0, pTopFood = 0;
   const food: Cand[] = [];
+  const lambda = mix.lambda ?? 0;
   for (let i = 0; i < vocab.length; i++) {
     if (vocab[i].neg) { pNeg += p[i]; continue; }
-    pFoodSum += p[i]; pTopFood = Math.max(pTopFood, p[i]);
-    food.push({ idx: i, p: p[i] });
+    pTopFood = Math.max(pTopFood, p[i]);
+    // Ranking adds lambda * lp to the logit, i.e. multiplies the probability by exp(lambda * lp).
+    const w = lambda ? p[i] * Math.exp(lambda * (vocab[i].lp ?? 0)) : p[i];
+    pFoodSum += w;
+    food.push({ idx: i, p: w });
   }
   const none = (skip: Skip): Classified => ({ skip, pNeg, pTopFood, cands: [], top1: 0 });
+  // The gate uses the prior-free probabilities so the prior never changes what counts as food.
   if (pNeg > gate.p_neg_max) return none('negative');
   if (pTopFood < gate.p_food_min || pFoodSum <= 0) return none('low_food');
   food.sort((a, b) => b.p - a.p);

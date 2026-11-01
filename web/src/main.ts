@@ -1,322 +1,335 @@
+// Calorie Lens: one button, live camera, food chips with calories. Everything runs on-device (worker.ts).
 import './style.css';
-import { decodeFile } from './decode.ts';
-import { deleteMeal, exportBackup, getAllMeals, importBackup, putMeal, storageOk } from './db.ts';
-import { displayName, fmtKcal, fmtRange, fmtTime, round10 } from './format.ts';
-import { dayKey, dayTotal, mealTotal, mealsOfDay, parseDayKey, removeItem, shiftDay, weekMedians } from './log.ts';
-import type { LogItem, Meal } from './log.ts';
-import type { Analysis } from './pipeline.ts';
-import type { InMsg, OutMsg } from './worker.ts';
+import { fmtRange, maybeSecond, round10 } from './format.ts';
+import { renderMarkdown } from './md.ts';
+import { sumRange } from './mixture.ts';
+import type { InMsg, OutMsg, WorkerResult } from './worker.ts';
+import type { LensTrack } from './pipeline.ts';
 
 const BASE = import.meta.env.BASE_URL;
-const DISCLAIMER = 'Estimates only, not medical advice. Names may be wrong about half the time; ranges account for that.';
+const MAX_EDGE = 960, TAU_MS = 90, HINT_MS = 3000, SUMMARY_MS = 3000;
+const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
-// ---------- state ----------
-type Status =
-  | { kind: 'idle' }
-  | { kind: 'progress'; phase: string; loaded?: number; total?: number }
-  | { kind: 'error'; message: string }
-  | { kind: 'none'; photo: string; info: string }
-  | { kind: 'done'; photo: string; meal: Meal; backend: string };
+document.getElementById('app')!.innerHTML = `
+<main id="start" class="start">
+  <button id="info" class="info" aria-label="About, attribution and disclaimer">i</button>
+  <div class="hero">
+    <svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 22V12a4 4 0 0 1 4-4h10M42 8h10a4 4 0 0 1 4 4v10M56 42v10a4 4 0 0 1-4 4H42M22 56H12a4 4 0 0 1-4-4V42"/></g><circle cx="32" cy="32" r="8" fill="currentColor"/></svg>
+    <h1>Calorie Lens</h1>
+    <button id="go" class="go">Turn on camera</button>
+    <p class="sub">Runs on your phone. Photos never leave it.</p>
+  </div>
+</main>
+<section id="live" class="live" hidden aria-label="Live camera">
+  <video id="vid" playsinline muted autoplay disablepictureinpicture></video>
+  <div id="scan" class="scan" hidden aria-hidden="true"></div>
+  <div id="ov" class="ov"></div>
+  <div id="load" class="load" hidden role="status"><span id="loadtxt"></span><i><b id="loadbar"></b></i></div>
+  <div id="hint" class="hint" hidden>Point at your food</div>
+  <div class="bar">
+    <div id="pill" class="pill" hidden><span id="pilltxt"></span><small id="pillrange"></small></div>
+    <button id="close" class="close" aria-label="Turn off camera">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div id="err" class="errbox" hidden role="alert"><p id="errtxt"></p><button id="retry" class="go small">Try again</button></div>
+  <div id="sum" class="sr" aria-live="polite"></div>
+</section>
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheet-h" tabindex="-1">
+    <div class="sheet-head"><h2 id="sheet-h">About Calorie Lens</h2><button id="sheetx" class="icon" aria-label="Close">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button></div>
+    <p class="disc"><strong>Estimates only, not medical advice.</strong> Calories are rough ranges from a photo and can be far off.</p>
+    <div id="attr" class="md"></div>
+  </div>
+</div>
+<div id="probe" class="probe" aria-hidden="true"></div>`;
 
-let meals: Meal[] = [];
-let today = dayKey(Date.now());
-let day = today;
-let status: Status = { kind: 'idle' };
-let storageErr: string | null = null;
-let busy = false;
-let sheetOpen = false;
-let sheetNote = '';
+const vid = $<HTMLVideoElement>('vid'), ov = $('ov'), scanEl = $('scan'), loadEl = $('load'), hintEl = $('hint');
 
-const thumbUrls = new Map<string, string>();
-const thumbUrl = (m: Meal) => {
-  if (!m.thumb) return '';
-  let u = thumbUrls.get(m.id);
-  if (!u) { u = URL.createObjectURL(m.thumb); thumbUrls.set(m.id, u); }
-  return u;
-};
-
-// ---------- tiny DOM helper ----------
-type Child = Node | string | null | false | undefined;
-function h<K extends keyof HTMLElementTagNameMap>(tag: K, props: Record<string, any> = {}, ...kids: Child[]): HTMLElementTagNameMap[K] {
-  const el = document.createElement(tag);
-  for (const [k, v] of Object.entries(props)) {
-    if (v == null || v === false) continue;
-    if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
-    else if (k === 'class') el.className = v;
-    else if (k === 'style') el.setAttribute('style', v);
-    else el.setAttribute(k, v === true ? '' : String(v));
-  }
-  for (const c of kids) if (c) el.append(c as Node | string);
-  return el;
-}
-
-// ---------- worker ----------
+/* ---------- worker + model loading ---------- */
 let worker: Worker | null = null;
-let seq = 0;
-let evalSeq = 0;
-let pending: { id: number; resolve(m: Extract<OutMsg, { type: 'result' }>): void; reject(e: Error & { code?: string }): void } | null = null;
+let ready = false, busy = false, running = false, loadError = false;
+let dl = { loaded: 0, total: 0, phase: 'download' as 'download' | 'init' };
 
 function getWorker(): Worker {
   if (worker) return worker;
   const w = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
-  w.onmessage = (ev: MessageEvent<OutMsg>) => {
-    const m = ev.data;
-    if (!pending || m.id !== pending.id) return;
-    if (m.type === 'progress') { status = { kind: 'progress', phase: m.phase, loaded: m.loaded, total: m.total }; renderStatus(); }
-    else if (m.type === 'result') { const p = pending; pending = null; p.resolve(m); }
-    else { const p = pending; pending = null; p.reject(Object.assign(new Error(m.message), { code: m.code })); }
-  };
-  w.onerror = (ev) => {
-    const p = pending; pending = null; worker = null;
-    p?.reject(new Error(ev.message || 'worker crashed'));
-  };
-  worker = w;
-  return w;
+  w.onmessage = (ev: MessageEvent<OutMsg>) => onWorker(ev.data);
+  w.onerror = () => { loadError = true; busy = false; updateLoad(); };
+  return (worker = w);
+}
+function warm(): void {
+  loadError = false;
+  const qs = new URLSearchParams(location.search);
+  getWorker().postMessage({ type: 'warm', base: BASE, ortBase: qs.get('ortbase') ?? undefined, threads: Number(qs.get('threads')) || undefined } satisfies InMsg);
+}
+function onWorker(m: OutMsg): void {
+  if (m.type === 'progress') { dl = { loaded: m.loaded ?? dl.loaded, total: m.total ?? dl.total, phase: m.phase }; updateLoad(); }
+  else if (m.type === 'ready') { ready = true; noneSince = performance.now(); updateLoad(); }
+  else if (m.type === 'error') { busy = false; if (!ready) { loadError = true; updateLoad(); } }
+  else if (m.type === 'result') { busy = false; if (running) onResult(m.r); }
+}
+const mb = (n: number) => Math.round(n / 1048576);
+function updateLoad(): void {
+  const show = running && !ready;
+  loadEl.hidden = !show;
+  if (!show) return;
+  const total = Math.max(dl.total, 1), loaded = Math.min(dl.loaded, total);
+  $('loadtxt').textContent = loadError ? 'Could not load the food models. Check your connection and try again.'
+    : dl.phase === 'init' || (dl.total > 0 && loaded >= total) ? 'Starting food models…'
+    : dl.total > 0 ? `Loading food models · ${mb(loaded)} / ${mb(total)} MB` : 'Loading food models…';
+  $('loadbar').style.width = loadError ? '0' : `${dl.total > 0 ? Math.min(100, (loaded / total) * 100) : 0}%`;
+  if (loadError) showErr('The food models could not be loaded. Check your connection and try again.');
 }
 
-function runWorker(payload: Omit<InMsg, 'type' | 'id' | 'base'>): Promise<Extract<OutMsg, { type: 'result' }>> {
-  return new Promise((resolve, reject) => {
-    const id = ++seq;
-    pending = { id, resolve, reject };
-    const ortBase = new URLSearchParams(location.search).get('ortbase') ?? undefined;
-    const msg: InMsg = { type: 'analyze', id, base: BASE, ortBase, ...payload };
-    const transfer: Transferable[] = payload.decoded ? [payload.decoded.rgba.buffer] : [];
-    getWorker().postMessage(msg, transfer);
-  });
-}
+/* ---------- camera ---------- */
+let stream: MediaStream | null = null;
+function showErr(msg: string | null): void { $('err').hidden = !msg; if (msg) $('errtxt').textContent = msg; }
 
-// ---------- actions ----------
-async function snap(file: File | undefined) {
-  if (!file || busy) return;
-  busy = true;
-  const photo = URL.createObjectURL(file);
-  const t0 = performance.now();
-  status = { kind: 'progress', phase: 'decode' };
-  render();
+async function startCamera(): Promise<void> {
+  showErr(null);
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+    showErr('The camera needs a secure (https) connection. Open this page over https and try again.'); return;
+  }
   try {
-    let res;
-    try { res = await runWorker({ file }); }
-    catch (e: any) {
-      if (e?.code !== 'NO_CANVAS') throw e;
-      status = { kind: 'progress', phase: 'decode' }; renderStatus();
-      res = await runWorker({ decoded: await decodeFile(file) }); // older iOS: decode on the main thread
-    }
-    const a: Analysis = res.result;
-    // Read by the offline evaluation harness (ml/snap/eval_web.py); harmless in normal use.
-    (window as any).__clLast = { n: ++evalSeq, ms: Math.round(performance.now() - t0), backend: res.backend, result: a };
-    if (a.items.length === 0) {
-      status = { kind: 'none', photo, info: `boxes ${a.nBoxes}, empty/non-food ${a.skipped.negative}, unsure ${a.skipped.low_food}` };
-    } else {
-      const meal: Meal = { id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, ts: Date.now(), thumb: res.thumb, items: a.items };
-      try { await putMeal(meal); storageErr = null; } catch (e: any) { storageErr = String(e?.message ?? e); }
-      meals.push(meal);
-      today = dayKey(Date.now()); day = today;
-      status = { kind: 'done', photo, meal, backend: res.backend };
-    }
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false,
+    });
   } catch (e: any) {
-    (window as any).__clLast = { n: ++evalSeq, error: String(e?.message ?? e) };
-    status = { kind: 'error', message: String(e?.message ?? e) };
-  } finally { busy = false; render(); }
+    const n = e?.name;
+    showErr(n === 'NotAllowedError' || n === 'SecurityError' ? 'Camera access is blocked. Allow the camera for this site in your browser settings, then try again.'
+      : n === 'NotFoundError' || n === 'OverconstrainedError' ? 'No camera was found on this device.'
+      : n === 'NotReadableError' ? 'The camera is in use by another app. Close it and try again.'
+      : 'The camera could not be started. Try again.');
+    return;
+  }
+  if (!running) { stopStream(); return; }
+  vid.srcObject = stream;
+  try { await vid.play(); } catch { /* muted + playsinline autoplay is allowed; ignore */ }
+  noneSince = performance.now(); camAt = performance.now();
+}
+function stopStream(): void { stream?.getTracks().forEach(t => t.stop()); stream = null; vid.srcObject = null; }
+
+function openLive(): void {
+  running = true; busy = false;
+  $('start').hidden = true; $('live').hidden = false;
+  resetLens(); updateLoad();
+  if (!worker || loadError) warm();
+  void startCamera();
+}
+function closeLive(): void {
+  running = false;
+  stopStream(); clearViews(); worker?.postMessage({ type: 'reset' } satisfies InMsg);
+  $('live').hidden = true; $('start').hidden = false; showErr(null);
+  $<HTMLButtonElement>('go').focus();
 }
 
-async function removeMeal(id: string) {
-  if (!confirm('刪除這一餐？ Delete this meal?')) return;
-  try { await deleteMeal(id); } catch (e: any) { storageErr = String(e?.message ?? e); }
-  meals = meals.filter(m => m.id !== id);
-  const u = thumbUrls.get(id); if (u) { URL.revokeObjectURL(u); thumbUrls.delete(id); }
-  if (status.kind === 'done' && status.meal.id === id) status = { kind: 'idle' };
-  render();
+/* ---------- frame grabbing: latest frame wins, never queued ---------- */
+let grabCanvas: HTMLCanvasElement | null = null;
+async function grab(): Promise<ImageBitmap | null> {
+  const vw = vid.videoWidth, vh = vid.videoHeight;
+  const s = Math.min(1, MAX_EDGE / Math.max(vw, vh)), w = Math.max(1, Math.round(vw * s)), h = Math.max(1, Math.round(vh * s));
+  try { return await createImageBitmap(vid, { resizeWidth: w, resizeHeight: h, resizeQuality: 'medium' }); } catch { /* older Safari */ }
+  grabCanvas ??= document.createElement('canvas');
+  grabCanvas.width = w; grabCanvas.height = h;
+  grabCanvas.getContext('2d')!.drawImage(vid, 0, 0, w, h);
+  try { return await createImageBitmap(grabCanvas); } catch { return null; }
+}
+async function pump(): Promise<void> {
+  if (!running || !ready || busy || document.hidden || vid.readyState < 2 || !vid.videoWidth) return;
+  busy = true;
+  const bm = await grab();
+  if (!bm || !running) { busy = false; bm?.close(); return; }
+  firstSent ??= performance.now();
+  getWorker().postMessage({ type: 'frame', bitmap: bm, t: performance.now() } satisfies InMsg, [bm]);
 }
 
-async function removeOneItem(m: Meal, itemId: string) {
-  const next = removeItem(m, itemId);
-  if (!next) return removeMeal(m.id);
-  try { await putMeal(next); } catch (e: any) { storageErr = String(e?.message ?? e); }
-  meals = meals.map(x => (x.id === m.id ? next : x));
-  if (status.kind === 'done' && status.meal.id === m.id) status = { ...status, meal: next };
-  render();
+/* ---------- tracks, drawing ---------- */
+type B4 = [number, number, number, number];
+interface View {
+  id: number; t: LensTrack; cur: B4; tgt: B4; since: number; el: HTMLDivElement; chip: HTMLButtonElement;
+  cx: number; cy: number; cw: number; ch: number; key: string; placed: boolean; gone: boolean; b: R;
+}
+interface R { x: number; y: number; w: number; h: number }
+const views = new Map<number, View>();
+let expanded: number | null = null;
+let noneSince = performance.now(), camAt = performance.now(), firstSent: number | null = null;
+const stamps: number[] = [];
+const lens = { frames: 0, lastMs: 0, fps: 0, tracks: [] as unknown[], firstLabelMs: null as number | null, tapToLabelMs: null as number | null,
+  ready: false, nBoxes: 0, prepMs: 0, locMs: 0, clsMs: 0, changes: [] as { id: number; from: string; to: string; t: number }[] };
+(window as unknown as { __clLens: typeof lens }).__clLens = lens;
+
+function resetLens(): void {
+  lens.frames = 0; lens.lastMs = 0; lens.fps = 0; lens.tracks = []; lens.firstLabelMs = null; lens.tapToLabelMs = null; lens.changes = [];
+  stamps.length = 0; firstSent = null; camAt = performance.now(); noneSince = performance.now();
 }
 
-// ---------- views ----------
-const phaseText: Record<string, string> = {
-  decode: '讀取照片… Reading photo', init: '載入模型… Starting models', locate: '找出食物… Finding food', classify: '辨識中… Naming items',
-};
-const mb = (n: number) => (n / 1048576).toFixed(1);
+function fillChip(v: View, open: boolean): void {
+  const c = v.chip;
+  c.replaceChildren();
+  const l1 = document.createElement('span'); l1.className = 'l1';
+  const nm = document.createElement('b'); nm.textContent = v.t.name;
+  l1.append(nm, ` · ~${round10(v.t.p50)} kcal`);
+  c.append(l1);
+  if (open) {
+    const l2 = document.createElement('span'); l2.className = 'l2'; l2.textContent = `Range ${fmtRange(v.t)} kcal`; c.append(l2);
+    const s = maybeSecond(v.t.cands);
+    if (s) { const l3 = document.createElement('span'); l3.className = 'l2'; l3.textContent = `maybe ${s.name}`; c.append(l3); }
+  }
+  c.setAttribute('aria-expanded', String(open));
+  c.classList.toggle('open', open);
+  v.cw = c.offsetWidth; v.ch = c.offsetHeight;
+}
+const chipKey = (v: View, open: boolean) =>
+  `${v.t.name}|${round10(v.t.p50)}|${open ? `${fmtRange(v.t)}|${maybeSecond(v.t.cands)?.name ?? ''}` : ''}`;
 
-function progressCard(s: Extract<Status, { kind: 'progress' }>): HTMLElement {
-  const dl = s.phase === 'download';
-  const pct = dl && s.total ? Math.min(100, (100 * (s.loaded ?? 0)) / s.total) : 0;
-  const bar = h('div', { class: 'progress' + (dl && s.total ? '' : ' indet') }, h('i', { style: dl && s.total ? `width:${pct}%` : '' }));
-  return h('div', { class: 'card', role: 'status' },
-    h('div', {}, dl ? '下載模型（僅第一次）… Downloading models (first time only)' : phaseText[s.phase] ?? s.phase),
-    bar,
-    dl && s.total ? h('div', { class: 'muted' }, `${mb(s.loaded ?? 0)} / ${mb(s.total)} MB`) : null,
-    dl ? h('div', { class: 'muted' }, '之後離線也能用 Cached for offline use afterwards') : null);
+function makeView(t: LensTrack, now: number): View {
+  const el = document.createElement('div'); el.className = 'br';
+  for (const k of ['tl', 'tr', 'bl', 'rb']) { const s = document.createElement('i'); s.className = `c ${k}`; el.append(s); }
+  const chip = document.createElement('button'); chip.className = 'chip'; chip.type = 'button';
+  const v: View = { id: t.id, t, cur: [...t.box], tgt: [...t.box], since: now, el, chip, cx: 0, cy: 0, cw: 0, ch: 0, key: '', placed: false, gone: false,
+    b: { x: 0, y: 0, w: 0, h: 0 } };
+  chip.addEventListener('click', e => { e.stopPropagation(); expanded = expanded === v.id ? null : v.id; });
+  ov.append(el, chip);
+  requestAnimationFrame(() => { el.classList.add('in'); chip.classList.add('in'); });
+  return v;
+}
+function clearViews(): void {
+  for (const v of views.values()) { v.el.remove(); v.chip.remove(); }
+  views.clear(); expanded = null; lens.tracks = [];
 }
 
-function itemRow(m: Meal, it: LogItem, deletable = true): HTMLElement {
-  return h('div', { class: 'row' },
-    h('div', { class: 'name' }, displayName(it.name, it.unsure),
-      it.name !== it.nameEn ? h('small', {}, it.nameEn) : null),
-    h('div', { class: 'kcal' }, fmtKcal(it)),
-    deletable ? h('button', { class: 'x', 'aria-label': `刪除 ${it.name} Delete item`, onClick: () => removeOneItem(m, it.id) }, '✕') : null);
+function onResult(r: WorkerResult): void {
+  const now = performance.now();
+  lens.frames++; lens.lastMs = Math.round(r.ms); lens.nBoxes = r.nBoxes; lens.prepMs = Math.round(r.prepMs); lens.locMs = Math.round(r.locMs); lens.clsMs = Math.round(r.clsMs); lens.ready = true;
+  stamps.push(now); while (stamps.length > 1 && now - stamps[0] > 6000) stamps.shift();
+  lens.fps = stamps.length > 1 ? Math.round(((stamps.length - 1) / ((now - stamps[0]) / 1000)) * 100) / 100 : 0;
+  const seen = new Set<number>();
+  for (const t of r.tracks) {
+    seen.add(t.id);
+    let v = views.get(t.id);
+    if (!v) { v = makeView(t, now); views.set(t.id, v); }
+    else if (v.t.name !== t.name) lens.changes.push({ id: t.id, from: v.t.name, to: t.name, t: Math.round(now - camAt) });
+    v.t = t; v.tgt = [...t.box];
+  }
+  for (const v of views.values()) if (!seen.has(v.id) && !v.gone) {
+    v.gone = true; v.el.classList.remove('in'); v.chip.classList.remove('in');
+    setTimeout(() => { v.el.remove(); v.chip.remove(); views.delete(v.id); }, 260);
+    if (expanded === v.id) expanded = null;
+  }
+  if (r.tracks.length) {
+    noneSince = now;
+    if (lens.firstLabelMs === null && firstSent !== null) { lens.firstLabelMs = Math.round(now - firstSent); lens.tapToLabelMs = Math.round(now - camAt); }
+  }
+  lens.tracks = r.tracks.map(t => ({ id: t.id, name: t.name, p50: t.p50, p10: t.p10, p90: t.p90, box: t.box.map(x => Math.round(x * 1000) / 1000),
+    since: Math.round((views.get(t.id)?.since ?? now) - camAt) }));
 }
 
-function resultCard(s: Extract<Status, { kind: 'done' }>): HTMLElement {
-  const m = s.meal, tot = mealTotal(m)!;
-  const photo = h('div', { class: 'photo' }, h('img', { src: s.photo, alt: '' }));
-  m.items.forEach(it => {
-    const [x1, y1, x2, y2] = it.box;
-    const first = y1 < 0.06;
-    photo.append(h('div', { class: 'box' + (first ? ' first' : ''), style: `left:${x1 * 100}%;top:${y1 * 100}%;width:${(x2 - x1) * 100}%;height:${(y2 - y1) * 100}%` },
-      h('span', {}, `${displayName(it.name, it.unsure)} ${fmtRange(it)}`)));
-  });
-  return h('div', { class: 'card' },
-    photo,
-    h('div', { style: 'margin-top:8px' }, ...m.items.map(it => itemRow(m, it))),
-    h('div', { class: 'total' }, h('span', {}, '這餐 This meal'), h('span', {}, fmtKcal(tot))),
-    h('div', { class: 'muted', style: 'margin-top:6px' }, storageErr ? '' : `✓ 已記錄 Saved · ${fmtTime(m.ts)} · ${s.backend}`),
-    h('div', { class: 'btns', style: 'margin-top:8px' }, h('button', { class: 'btn', onClick: () => { status = { kind: 'idle' }; render(); } }, '關閉 Dismiss')));
+/* safe area + layout */
+const probe = $('probe');
+function insets() {
+  const cs = getComputedStyle(probe);
+  return { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 };
+}
+const hit = (a: R, b: R, pad = 4) => a.x < b.x + b.w + pad && b.x < a.x + a.w + pad && a.y < b.y + b.h + pad && b.y < a.y + a.h + pad;
+
+let lastFrame = performance.now(), lastPill = 0, lastSum = 0, lastSumText = '';
+function frame(now: number): void {
+  requestAnimationFrame(frame);
+  if (!running) return;
+  void pump();
+  const dt = Math.min(100, now - lastFrame); lastFrame = now;
+  const a = 1 - Math.exp(-dt / TAU_MS);
+  const W = ov.clientWidth, H = ov.clientHeight, vw = vid.videoWidth || 16, vh = vid.videoHeight || 9;
+  const sc = Math.max(W / vw, H / vh), ox = (W - vw * sc) / 2, oy = (H - vh * sc) / 2;
+  const ins = insets();
+  const safe = { l: 10 + ins.l, r: W - 10 - ins.r, t: 12 + ins.t + (loadEl.hidden ? 0 : 40), b: H - ins.b - 96 };
+
+  const list = [...views.values()].filter(v => !v.gone);
+  for (const v of list) {
+    for (let i = 0; i < 4; i++) v.cur[i] += (v.tgt[i] - v.cur[i]) * a;
+    const x1 = v.cur[0] * vw * sc + ox, y1 = v.cur[1] * vh * sc + oy, x2 = v.cur[2] * vw * sc + ox, y2 = v.cur[3] * vh * sc + oy;
+    const bx = Math.max(2, x1), by = Math.max(2, y1), bw = Math.max(24, Math.min(W - 2, x2) - bx), bh = Math.max(24, Math.min(H - 2, y2) - by);
+    v.el.style.transform = `translate(${bx}px,${by}px)`; v.el.style.width = `${bw}px`; v.el.style.height = `${bh}px`;
+    const open = expanded === v.id, key = chipKey(v, open);
+    if (key !== v.key) { v.key = key; fillChip(v, open); }
+    v.b = { x: bx, y: by, w: bw, h: bh };
+  }
+  // chips: the expanded one first (keeps its place), then top to bottom; the first free candidate position wins
+  const order = [...list].sort((p, q) => (expanded === q.id ? 1 : 0) - (expanded === p.id ? 1 : 0) || p.b.y - q.b.y);
+  const placed: R[] = [];
+  for (const v of order) {
+    const b = v.b, cw = Math.min(v.cw || 160, safe.r - safe.l), chh = v.ch || 44, g = 6;
+    const clampR = (x: number, y: number): R => ({ x: Math.min(Math.max(x, safe.l), safe.r - cw), y: Math.min(Math.max(y, safe.t), safe.b - chh), w: cw, h: chh });
+    const cands = [clampR(b.x, b.y - chh - g), clampR(b.x + g, b.y + g), clampR(b.x, b.y + b.h + g), clampR(b.x + g, b.y + b.h - chh - g)];
+    let pick = cands.find(c => placed.every(p => !hit(c, p)));
+    if (!pick) { // stack: sweep down (then up) from the inside-top candidate until a free slot is found
+      const base = cands[1], step = chh + 4;
+      for (let k = 1; k < 24 && !pick; k++) for (const dy of [k * step, -k * step]) {
+        const c = clampR(base.x, base.y + dy);
+        if (c.y === base.y + dy && placed.every(p => !hit(c, p))) { pick = c; break; }
+      }
+      pick ??= base;
+    }
+    placed.push(pick);
+    if (!v.placed) { v.cx = pick.x; v.cy = pick.y; v.placed = true; }
+    else { v.cx += (pick.x - v.cx) * a; v.cy += (pick.y - v.cy) * a; }
+    v.chip.style.transform = `translate(${v.cx}px,${v.cy}px)`;
+    v.chip.style.maxWidth = `${safe.r - safe.l}px`;
+  }
+
+  // scan effect, hint, pill, aria summary
+  const n = list.length, errHidden = $('err').hidden;
+  scanEl.hidden = !(ready && n === 0 && errHidden);
+  hintEl.hidden = !(ready && n === 0 && errHidden && now - noneSince > HINT_MS);
+  if (now - lastPill > 400) { lastPill = now; updatePill(list, now); }
 }
 
-function statusCard(): HTMLElement | null {
-  switch (status.kind) {
-    case 'idle': return null;
-    case 'progress': return progressCard(status);
-    case 'error':
-      return h('div', { class: 'card' }, h('div', { class: 'err' }, '發生錯誤 Something went wrong'),
-        h('div', { class: 'muted', style: 'overflow-wrap:anywhere' }, status.message),
-        h('div', { class: 'btns', style: 'margin-top:8px' }, h('button', { class: 'btn', onClick: () => { status = { kind: 'idle' }; render(); } }, 'OK')));
-    case 'none':
-      return h('div', { class: 'card' }, h('div', { class: 'photo' }, h('img', { src: status.photo, alt: '' })),
-        h('div', { class: 'warn', style: 'margin-top:8px;font-weight:600' }, '沒有認出食物，未記錄。 No food recognised; nothing logged.'),
-        h('div', { class: 'muted' }, status.info),
-        h('div', { class: 'btns', style: 'margin-top:8px' }, h('button', { class: 'btn', onClick: () => { status = { kind: 'idle' }; render(); } }, 'OK')));
-    case 'done': return resultCard(status);
+function updatePill(list: View[], now: number): void {
+  const pill = $('pill');
+  if (!list.length) { pill.hidden = true; setSummary('', now); return; }
+  const s = sumRange(list.map(v => ({ p10: v.t.p10, p50: v.t.p50, p90: v.t.p90, q: v.t.q })), 'lens')!;
+  pill.hidden = false;
+  $('pilltxt').textContent = `On screen · ~${round10(s.p50)} kcal`;
+  $('pillrange').textContent = list.length > 1 ? fmtRange(s) : '';
+  setSummary(`${list.length} ${list.length === 1 ? 'food' : 'foods'}, about ${round10(s.p50)} kcal`, now);
+}
+function setSummary(text: string, now: number): void {
+  if (text === lastSumText || now - lastSum < SUMMARY_MS) return;
+  lastSum = now; lastSumText = text; $('sum').textContent = text;
+}
+
+/* ---------- events ---------- */
+ov.addEventListener('click', () => { expanded = null; });
+$('go').addEventListener('click', openLive);
+$('close').addEventListener('click', closeLive);
+$('retry').addEventListener('click', () => { if (loadError) warm(); void startCamera(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && running) void vid.play().catch(() => {}); });
+
+let attrLoaded = false, sheetFrom: HTMLElement | null = null;
+function openSheet(): void {
+  sheetFrom = document.activeElement as HTMLElement;
+  $('sheet').hidden = false; $('sheetx').focus();
+  if (!attrLoaded) {
+    attrLoaded = true;
+    fetch(`${BASE}models/ATTRIBUTION.md`).then(async r => {
+      const t = await r.text();
+      if (!r.ok || /^\s*<!doctype|^\s*<html/i.test(t)) throw new Error('missing');
+      $('attr').innerHTML = renderMarkdown(t);
+    }).catch(() => { attrLoaded = false; $('attr').textContent = 'Attribution could not be loaded.'; });
   }
 }
+function closeSheet(): void { $('sheet').hidden = true; sheetFrom?.focus(); }
+$('info').addEventListener('click', openSheet);
+$('sheetx').addEventListener('click', closeSheet);
+$('sheet').addEventListener('click', e => { if (e.target === $('sheet')) closeSheet(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });
 
-const fmtDay = (k: string) => parseDayKey(k).toLocaleDateString('zh-TW', { month: 'long', day: 'numeric', weekday: 'short' });
-
-function mealCard(m: Meal): HTMLElement {
-  const tot = mealTotal(m)!;
-  return h('div', { class: 'card meal' },
-    m.thumb ? h('img', { class: 'thumb', src: thumbUrl(m), alt: '' }) : h('div', { class: 'thumb' }),
-    h('div', { class: 'body' },
-      h('div', { class: 'head' }, h('span', {}, fmtTime(m.ts)), h('span', {}, fmtKcal(tot))),
-      ...m.items.map(it => itemRow(m, it)),
-      h('div', { class: 'tools' }, h('button', { class: 'link', onClick: () => removeMeal(m.id) }, '🗑 刪除這餐 Delete meal'))));
+requestAnimationFrame(frame);
+// First render done: start fetching / initialising the models so they are ready (or nearly) when the user taps.
+setTimeout(warm, 0);
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  navigator.serviceWorker.register(`${BASE}sw.js`).catch(() => { /* optional */ });
 }
-
-function dayView(): HTMLElement[] {
-  const ms = mealsOfDay(meals, day), t = dayTotal(ms);
-  const out: HTMLElement[] = [];
-  out.push(h('div', { class: 'card daytotal' },
-    h('div', { class: 'muted' }, day === today ? '今天合計 Today' : '當日合計 Day total'),
-    t ? h('div', { class: 'big' }, fmtRange(t), h('small', {}, ' kcal')) : h('div', { class: 'big', style: 'color:var(--muted)' }, '—'),
-    t ? h('div', { class: 'muted' }, `中位數 median ≈ ${round10(t.p50)} kcal · ${ms.length} 餐 meals`) : h('div', { class: 'muted' }, '還沒有紀錄 Nothing logged')));
-  if (!ms.length) out.push(h('div', { class: 'empty' }, '拍一張餐點照片開始吧 Snap a meal to start'));
-  for (const m of ms) out.push(mealCard(m));
-  // 7-day bars of daily medians
-  const wk = weekMedians(meals, day), max = Math.max(1, ...wk.map(w => w.median ?? 0));
-  out.push(h('div', { class: 'card' }, h('div', { style: 'font-weight:700' }, '近 7 天（中位數）Last 7 days (median)'),
-    h('div', { class: 'week' }, ...wk.map(w => h('button', { class: 'd' + (w.key === day ? ' sel' : ''), 'aria-label': w.key, onClick: () => { day = w.key; render(); } },
-      h('em', {}, w.median == null ? '' : String(round10(w.median))),
-      h('i', { style: `height:${w.median == null ? 3 : Math.max(4, (w.median / max) * 84)}px` }),
-      h('span', {}, parseDayKey(w.key).toLocaleDateString('zh-TW', { weekday: 'narrow' })))))));
-  return out;
-}
-
-// ---------- settings sheet ----------
-function sheet(): HTMLElement {
-  const note = h('div', { class: 'muted', role: 'status' }, sheetNote);
-  const about = h('pre', { class: 'about' }, '…');
-  fetch(`${BASE}models/ATTRIBUTION.md`).then(async r => {
-    const t = await r.text();
-    about.textContent = r.ok && !/^\s*<!doctype|^\s*<html/i.test(t) ? t : '(ATTRIBUTION.md not available)';
-  }).catch(() => { about.textContent = '(ATTRIBUTION.md not available offline)'; });
-  const importInput = h('input', { type: 'file', accept: 'application/json,.json', class: 'sr', onChange: async (ev: Event) => {
-    const f = (ev.target as HTMLInputElement).files?.[0]; if (!f) return;
-    try { const n = await importBackup(await f.text()); meals = await getAllMeals(); sheetNote = `已匯入 ${n} 餐 Imported ${n} meals`; render(true); }
-    catch (e: any) { note.textContent = `匯入失敗 Import failed: ${e?.message ?? e}`; }
-    (ev.target as HTMLInputElement).value = '';
-  } });
-  const close = () => { sheetOpen = false; render(); };
-  const box = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '設定 Settings' },
-    h('div', { class: 'row', style: 'border:0' }, h('h2', { style: 'flex:1' }, '設定 Settings'), h('button', { class: 'x', 'aria-label': 'Close', onClick: close }, '✕')),
-    h('h3', {}, '備份 Backup'),
-    h('div', { class: 'btns' },
-      h('button', { class: 'btn', onClick: async () => {
-        try {
-          const blob = new Blob([await exportBackup(meals)], { type: 'application/json' });
-          const a = h('a', { href: URL.createObjectURL(blob), download: `calorie-lens-${dayKey(Date.now())}.json` });
-          document.body.append(a); a.click(); a.remove();
-          note.textContent = `已匯出 ${meals.length} 餐 Exported ${meals.length} meals`;
-        } catch (e: any) { note.textContent = `匯出失敗 Export failed: ${e?.message ?? e}`; }
-      } }, '⬇ 匯出 Export JSON'),
-      h('button', { class: 'btn', onClick: () => importInput.click() }, '⬆ 匯入 Import JSON'), importInput),
-    note,
-    h('h3', {}, '關於與資料來源 About & data sources'),
-    h('p', { class: 'muted' }, DISCLAIMER),
-    h('p', { class: 'muted' }, '照片只在你的手機上處理，不會上傳。 Photos are processed on this phone and never uploaded.'),
-    about);
-  const bg = h('div', { class: 'sheet-bg', onClick: (e: Event) => { if (e.target === bg) close(); } }, box);
-  return bg;
-}
-
-// ---------- render ----------
-let statusEl: HTMLElement | null = null;
-let fileCam: HTMLInputElement, filePick: HTMLInputElement;
-
-function renderStatus() {
-  if (!statusEl) return;
-  const c = statusCard();
-  statusEl.replaceChildren(...(c ? [c] : []));
-}
-
-function render(keepSheet = false) {
-  const app = document.getElementById('app')!;
-  const nextDisabled = day >= today;
-  const st = h("div", { id: "status" }); statusEl = st;
-  app.replaceChildren(
-    h('header', { class: 'top' },
-      h('button', { class: 'icon-btn', 'aria-label': '前一天 Previous day', onClick: () => { day = shiftDay(day, -1); render(); } }, '‹'),
-      h('div', { class: 'date' }, fmtDay(day), h('small', {}, day === today ? '今天 Today' : day)),
-      h('button', { class: 'icon-btn', 'aria-label': '後一天 Next day', disabled: nextDisabled, onClick: () => { day = shiftDay(day, 1); render(); } }, '›'),
-      h('button', { class: 'icon-btn', 'aria-label': '設定 Settings', onClick: () => { sheetOpen = true; render(); } }, '⚙')),
-    h('div', { class: 'capture' },
-      h('button', { class: 'snap', disabled: busy, onClick: () => fileCam.click() }, '📷 拍照記錄', h('small', {}, 'Snap meal')),
-      h('button', { class: 'pick', disabled: busy, onClick: () => filePick.click() }, '從相簿選 Choose photo')),
-    storageErr ? h('div', { class: 'card err' }, `無法使用本機儲存，紀錄不會保存。 Storage unavailable, meals will not be saved. (${storageErr})`) : "",
-    st,
-    ...dayView(),
-    h('div', { class: 'disclaimer' }, DISCLAIMER),
-  );
-  renderStatus();
-  if (sheetOpen && !keepSheet) document.body.append(sheet());
-  else if (sheetOpen && keepSheet) { document.querySelector('.sheet-bg')?.remove(); document.body.append(sheet()); }
-  if (!sheetOpen) document.querySelectorAll('.sheet-bg').forEach(e => e.remove());
-}
-
-// Hidden inputs live outside #app so re-rendering never detaches an input mid-pick.
-function mkInput(capture: boolean): HTMLInputElement {
-  const i = h('input', { type: 'file', accept: 'image/*', class: 'sr', tabindex: '-1', 'aria-hidden': 'true', capture: capture ? 'environment' : false,
-    onChange: () => { const f = i.files?.[0]; i.value = ''; void snap(f); } });
-  document.body.append(i);
-  return i;
-}
-
-async function boot() {
-  fileCam = mkInput(true); filePick = mkInput(false);
-  storageErr = await storageOk();
-  if (!storageErr) { try { meals = await getAllMeals(); } catch (e: any) { storageErr = String(e?.message ?? e); } }
-  render();
-  document.addEventListener('visibilitychange', () => {
-    const t = dayKey(Date.now());
-    if (!document.hidden && t !== today) { if (day === today) day = t; today = t; render(); }
-  });
-  if ('serviceWorker' in navigator && import.meta.env.PROD) {
-    navigator.serviceWorker.register(`${BASE}sw.js`).catch(() => { /* optional */ });
-  }
-}
-void boot();

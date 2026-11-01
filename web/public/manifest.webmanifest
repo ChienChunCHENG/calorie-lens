@@ -1,12 +1,12 @@
 {
   "name": "Calorie Lens",
   "short_name": "Calorie Lens",
-  "description": "Snap a meal, get a calorie range. Runs entirely on your phone.",
+  "description": "Point your camera at food and see calories. Runs entirely on your phone.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#1f9d55",
+  "theme_color": "#17703c",
   "background_color": "#f4f6f4",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

@@ -10,3 +10,5 @@
   hand-estimated entries marked "est" in the source vocabulary (`research/r3`). Portion ranges are typical-serving estimates, not measurements.
 - **Evaluation images** (not shipped): Food-101 subset, UECFoodPixComplete (via Hugging Face), Wikimedia Commons photos (various
   free licences, used only for local testing), and the user's own phone screenshots.
+- **Commonness prior** (`lp` in `vocab.json`): food-frequency counts from the CDC NHANES 2021-2023 "What We Eat in America" dietary recall files (public domain). It ranks common foods above rare ones when the photo is ambiguous.
+- **Added staples** (36 rows, e.g. fish and chips, schnitzel, Caesar salad): values come from FNDDS where a clean match exists. The rest are composed from FNDDS components or estimated, and those are marked `est` in `ml/snap/prior/out/new_rows_sources.json`.

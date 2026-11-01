@@ -1,0 +1,1143 @@
+[
+{
+"id": "white_rice",
+"en": "steamed white rice",
+"group": "staple",
+"kcal_g": 1.341,
+"n5k": [
+"white rice",
+"rice",
+"country rice",
+"pilaf",
+"risotto"
+]
+},
+{
+"id": "brown_rice",
+"en": "brown rice or wild rice",
+"group": "staple",
+"kcal_g": 1.129,
+"n5k": [
+"brown rice",
+"wild rice"
+]
+},
+{
+"id": "fried_rice",
+"en": "fried rice",
+"group": "staple",
+"kcal_g": 1.577,
+"n5k": [
+"fried rice"
+]
+},
+{
+"id": "noodles",
+"en": "cooked noodles",
+"group": "staple",
+"kcal_g": 1.09,
+"n5k": [
+"noodles",
+"chow mein",
+"lo mein",
+"rice noodles",
+"spaghetti"
+]
+},
+{
+"id": "pasta",
+"en": "cooked pasta",
+"group": "staple",
+"kcal_g": 1.628,
+"n5k": [
+"pasta",
+"macaroni",
+"orzo",
+"ravioli",
+"tortellini",
+"lasagna",
+"macaroni and cheese",
+"gnocchi",
+"pasta salad"
+]
+},
+{
+"id": "quinoa",
+"en": "cooked quinoa",
+"group": "staple",
+"kcal_g": 1.311,
+"n5k": [
+"quinoa",
+"bulgur",
+"millet",
+"wheat berry",
+"couscous",
+"barley",
+"polenta",
+"grits",
+"tabouli"
+]
+},
+{
+"id": "potato_roast",
+"en": "roasted potatoes",
+"group": "staple",
+"kcal_g": 1.27,
+"n5k": [
+"roasted potatoes",
+"potatoes",
+"red potatoes",
+"baked potatoes",
+"potato salad",
+"mashed potatoes"
+]
+},
+{
+"id": "hash_browns",
+"en": "hash browns",
+"group": "staple",
+"kcal_g": 3.26,
+"n5k": [
+"hash browns",
+"french fries",
+"potato skins"
+]
+},
+{
+"id": "sweet_potato",
+"en": "roasted sweet potato",
+"group": "staple",
+"kcal_g": 0.881,
+"n5k": [
+"sweet potato",
+"yam"
+]
+},
+{
+"id": "corn_cob",
+"en": "corn on the cob",
+"group": "staple",
+"kcal_g": 1.061,
+"n5k": [
+"corn on the cob"
+]
+},
+{
+"id": "corn_kernels",
+"en": "corn kernels",
+"group": "veg",
+"kcal_g": 0.948,
+"n5k": [
+"corn",
+"succotash",
+"hominy"
+]
+},
+{
+"id": "bread",
+"en": "slices of bread or toast",
+"group": "bread",
+"kcal_g": 2.954,
+"n5k": [
+"bread",
+"toast",
+"white bread",
+"wheat bread",
+"whole wheat bread",
+"multigrain bread",
+"rye bread",
+"sourdough bread",
+"potato bread",
+"raisin bread",
+"garlic bread",
+"focaccia",
+"pita bread",
+"flatbread",
+"naan",
+"challah",
+"cornbread",
+"rolls",
+"buns",
+"crispbread",
+"breadsticks",
+"croutons",
+"stuffing",
+"french toast"
+]
+},
+{
+"id": "bagel",
+"en": "bagel",
+"group": "bread",
+"kcal_g": 2.5,
+"n5k": [
+"bagels",
+"english muffins"
+]
+},
+{
+"id": "tortilla",
+"en": "tortilla or wrap",
+"group": "bread",
+"kcal_g": 2.18,
+"n5k": [
+"tortilla",
+"wraps",
+"tacos",
+"taco shells",
+"burritos",
+"quesadillas",
+"tostadas",
+"enchiladas"
+]
+},
+{
+"id": "pancake_waffle",
+"en": "pancakes or waffles",
+"group": "bread",
+"kcal_g": 2.903,
+"n5k": [
+"pancakes",
+"waffles",
+"crepes"
+]
+},
+{
+"id": "oatmeal",
+"en": "bowl of oatmeal",
+"group": "staple",
+"kcal_g": 0.945,
+"n5k": [
+"oatmeal",
+"oats",
+"cereal",
+"raisin bran",
+"muesli",
+"granola",
+"cereal bars",
+"granola bars"
+]
+},
+{
+"id": "pizza",
+"en": "slice of pizza",
+"group": "mixed",
+"kcal_g": 2.677,
+"n5k": [
+"cheese pizza",
+"pizza",
+"pepperoni pizza",
+"calzones",
+"pizza dough"
+]
+},
+{
+"id": "sandwich",
+"en": "a sandwich",
+"group": "mixed",
+"kcal_g": 2.329,
+"n5k": [
+"sandwiches",
+"hamburgers",
+"burgers",
+"cheeseburgers",
+"hot dogs",
+"gyros",
+"veggie burgers"
+]
+},
+{
+"id": "chicken",
+"en": "cooked chicken meat",
+"group": "protein",
+"kcal_g": 1.749,
+"n5k": [
+"chicken",
+"grilled chicken",
+"chicken breast",
+"chicken thighs",
+"roast chicken",
+"chicken drumsticks",
+"ground chicken",
+"turkey",
+"turkey breast",
+"roast turkey",
+"ground turkey",
+"chicken salad",
+"duck"
+]
+},
+{
+"id": "fried_chicken",
+"en": "fried chicken",
+"group": "fried",
+"kcal_g": 2.937,
+"n5k": [
+"fried chicken",
+"chicken nuggets",
+"chicken wings"
+]
+},
+{
+"id": "beef",
+"en": "cooked beef",
+"group": "protein",
+"kcal_g": 2.5,
+"n5k": [
+"beef",
+"roast beef",
+"brisket",
+"ground beef",
+"meatballs",
+"meatloaf",
+"corned beef",
+"pastrami",
+"bison",
+"veal"
+]
+},
+{
+"id": "steak",
+"en": "grilled steak",
+"group": "protein",
+"kcal_g": 2.71,
+"n5k": [
+"steak"
+]
+},
+{
+"id": "pork",
+"en": "cooked pork",
+"group": "protein",
+"kcal_g": 2.38,
+"n5k": [
+"pork",
+"roast pork",
+"pork chops",
+"ground pork",
+"ribs",
+"lamb",
+"lamb chops",
+"ham"
+]
+},
+{
+"id": "sausage",
+"en": "sausage",
+"group": "protein",
+"kcal_g": 2.828,
+"n5k": [
+"sausage",
+"chicken apple sausage",
+"soy sausage",
+"bologna",
+"salami"
+]
+},
+{
+"id": "bacon",
+"en": "strips of bacon",
+"group": "protein",
+"kcal_g": 5.153,
+"n5k": [
+"bacon",
+"turkey bacon",
+"pepperoni"
+]
+},
+{
+"id": "fish",
+"en": "cooked fish fillet",
+"group": "seafood",
+"kcal_g": 0.953,
+"n5k": [
+"fish",
+"tilapia",
+"cod",
+"haddock",
+"trout",
+"catfish",
+"flounder",
+"snapper",
+"halibut",
+"mahi mahi",
+"swordfish",
+"artic char",
+"mackerel",
+"carp",
+"eel",
+"herring",
+"sardines",
+"anchovies",
+"tuna",
+"tuna salad"
+]
+},
+{
+"id": "salmon",
+"en": "salmon fillet",
+"group": "seafood",
+"kcal_g": 1.78,
+"n5k": [
+"salmon",
+"smoked salmon"
+]
+},
+{
+"id": "shrimp",
+"en": "shrimp or seafood",
+"group": "seafood",
+"kcal_g": 1.452,
+"n5k": [
+"shrimp",
+"seafood",
+"crab",
+"lobster",
+"scallops",
+"mussels",
+"clams",
+"oysters",
+"squid",
+"calamari",
+"octopus",
+"crawfish",
+"sushi"
+]
+},
+{
+"id": "scrambled_eggs",
+"en": "scrambled eggs",
+"group": "egg",
+"kcal_g": 1.48,
+"n5k": [
+"scrambled eggs",
+"omelets",
+"quiche",
+"souffle",
+"egg salad"
+]
+},
+{
+"id": "egg_whites",
+"en": "egg whites or cooked eggs",
+"group": "egg",
+"kcal_g": 0.596,
+"n5k": [
+"egg whites",
+"eggs",
+"poached eggs",
+"hard boiled eggs",
+"fried eggs",
+"egg yolks"
+]
+},
+{
+"id": "tofu",
+"en": "tofu",
+"group": "protein",
+"kcal_g": 0.73,
+"n5k": [
+"tofu",
+"tempeh",
+"falafel"
+]
+},
+{
+"id": "beans",
+"en": "cooked beans or lentils",
+"group": "protein",
+"kcal_g": 1.463,
+"n5k": [
+"chickpeas",
+"white beans",
+"black beans",
+"kidney beans",
+"pinto beans",
+"lentils",
+"refried beans",
+"baked beans",
+"bean(seed) ",
+"lima beans",
+"edamame",
+"hummus"
+]
+},
+{
+"id": "broccoli",
+"en": "broccoli",
+"group": "veg",
+"kcal_g": 0.35,
+"n5k": [
+"broccoli"
+]
+},
+{
+"id": "cauliflower",
+"en": "cauliflower",
+"group": "veg",
+"kcal_g": 0.25,
+"n5k": [
+"cauliflower"
+]
+},
+{
+"id": "brussels",
+"en": "brussels sprouts",
+"group": "veg",
+"kcal_g": 0.43,
+"n5k": [
+"brussels sprouts"
+]
+},
+{
+"id": "carrot",
+"en": "sliced carrots",
+"group": "veg",
+"kcal_g": 0.41,
+"n5k": [
+"carrot",
+"baby carrots"
+]
+},
+{
+"id": "green_beans",
+"en": "green beans",
+"group": "veg",
+"kcal_g": 0.328,
+"n5k": [
+"green beans",
+"snow peas",
+"peas",
+"green peas",
+"okra"
+]
+},
+{
+"id": "asparagus",
+"en": "asparagus",
+"group": "veg",
+"kcal_g": 0.204,
+"n5k": [
+"asparagus",
+"leeks"
+]
+},
+{
+"id": "leafy_salad",
+"en": "mixed salad greens",
+"group": "veg",
+"kcal_g": 0.346,
+"n5k": [
+"mixed greens",
+"lettuce",
+"garden salad",
+"salads",
+"caesar salad",
+"greek salad",
+"taco salad",
+"endive",
+"alfalfa",
+"bean sprouts",
+"cabbage",
+"coleslaw"
+]
+},
+{
+"id": "spinach",
+"en": "spinach or kale leaves",
+"group": "veg",
+"kcal_g": 0.277,
+"n5k": [
+"spinach (raw)",
+"spinach (cooked)",
+"kale",
+"arugula",
+"collards",
+"chard",
+"mustard greens",
+"tatsoi"
+]
+},
+{
+"id": "bok_choy",
+"en": "bok choy or Chinese greens",
+"group": "veg",
+"kcal_g": 0.13,
+"n5k": [
+"bok choy"
+]
+},
+{
+"id": "tomato",
+"en": "tomatoes",
+"group": "veg",
+"kcal_g": 0.228,
+"n5k": [
+"tomatoes",
+"cherry tomatoes",
+"sun dried tomatoes",
+"salsa",
+"tomatillo"
+]
+},
+{
+"id": "cucumber",
+"en": "cucumber slices",
+"group": "veg",
+"kcal_g": 0.129,
+"n5k": [
+"cucumbers",
+"celery",
+"radishes",
+"pickles",
+"jicama",
+"zucchini",
+"water chestnuts"
+]
+},
+{
+"id": "squash",
+"en": "roasted squash",
+"group": "veg",
+"kcal_g": 0.235,
+"n5k": [
+"squash",
+"pumpkins",
+"chayote squash",
+"eggplant",
+"parsnips",
+"turnips",
+"beets",
+"celery root",
+"fennel",
+"artichokes"
+]
+},
+{
+"id": "bell_pepper",
+"en": "bell peppers",
+"group": "veg",
+"kcal_g": 0.395,
+"n5k": [
+"bell peppers",
+"jalapenos"
+]
+},
+{
+"id": "onion",
+"en": "cooked onions",
+"group": "veg",
+"kcal_g": 0.499,
+"n5k": [
+"onions",
+"green onions",
+"shallots",
+"garlic"
+]
+},
+{
+"id": "mushroom",
+"en": "mushrooms",
+"group": "veg",
+"kcal_g": 0.22,
+"n5k": [
+"mushroom"
+]
+},
+{
+"id": "mixed_veg",
+"en": "mixed cooked vegetables",
+"group": "veg",
+"kcal_g": 0.27,
+"n5k": [
+"mixed vegetables",
+"sauerkraut",
+"kimchi",
+"seaweed",
+"nopales"
+]
+},
+{
+"id": "avocado",
+"en": "avocado",
+"group": "veg",
+"kcal_g": 1.6,
+"n5k": [
+"avocado",
+"guacamole"
+]
+},
+{
+"id": "olives",
+"en": "olives",
+"group": "veg",
+"kcal_g": 1.15,
+"n5k": [
+"olives",
+"capers"
+]
+},
+{
+"id": "berries",
+"en": "berries",
+"group": "fruit",
+"kcal_g": 0.565,
+"n5k": [
+"berries",
+"raspberries",
+"blackberries",
+"blueberries",
+"cranberries",
+"cherries"
+]
+},
+{
+"id": "strawberry",
+"en": "strawberries",
+"group": "fruit",
+"kcal_g": 0.33,
+"n5k": [
+"strawberries"
+]
+},
+{
+"id": "apple",
+"en": "apple slices",
+"group": "fruit",
+"kcal_g": 0.52,
+"n5k": [
+"apple",
+"applesauce"
+]
+},
+{
+"id": "pear",
+"en": "pear",
+"group": "fruit",
+"kcal_g": 0.648,
+"n5k": [
+"pears",
+"peach",
+"peaches",
+"plums",
+"nectarines",
+"apricots",
+"figs"
+]
+},
+{
+"id": "grapes",
+"en": "grapes",
+"group": "fruit",
+"kcal_g": 0.69,
+"n5k": [
+"grapes"
+]
+},
+{
+"id": "melon",
+"en": "melon cubes",
+"group": "fruit",
+"kcal_g": 0.339,
+"n5k": [
+"cantaloupe",
+"honeydew melons",
+"watermelon"
+]
+},
+{
+"id": "pineapple",
+"en": "pineapple chunks",
+"group": "fruit",
+"kcal_g": 0.502,
+"n5k": [
+"pineapple",
+"mangos",
+"papayas"
+]
+},
+{
+"id": "banana",
+"en": "banana",
+"group": "fruit",
+"kcal_g": 0.723,
+"n5k": [
+"banana",
+"banana with peel"
+]
+},
+{
+"id": "citrus",
+"en": "orange or citrus slices",
+"group": "fruit",
+"kcal_g": 0.509,
+"n5k": [
+"orange",
+"orange with peel",
+"mandarin oranges",
+"grapefruits",
+"lemon",
+"lime",
+"kiwi",
+"pomegranate"
+]
+},
+{
+"id": "dried_fruit",
+"en": "raisins or dried fruit",
+"group": "fruit",
+"kcal_g": 2.737,
+"n5k": [
+"raisins",
+"prunes",
+"dates"
+]
+},
+{
+"id": "almonds",
+"en": "almonds",
+"group": "nut",
+"kcal_g": 5.882,
+"n5k": [
+"almonds",
+"nuts",
+"mixed nuts",
+"pecans",
+"walnuts",
+"cashews",
+"peanuts",
+"pistachios",
+"brazil nuts",
+"macadamia nuts",
+"pine nuts",
+"trail mix",
+"soy nuts",
+"chestnuts",
+"corn nuts"
+]
+},
+{
+"id": "seeds",
+"en": "seeds",
+"group": "nut",
+"kcal_g": 4.851,
+"n5k": [
+"chia seeds",
+"pumpkin seeds",
+"sunflower seeds",
+"seeds"
+]
+},
+{
+"id": "cheese",
+"en": "cheese",
+"group": "dairy",
+"kcal_g": 2.812,
+"n5k": [
+"cheese",
+"cheddar cheese",
+"swiss cheese",
+"mozzarella cheese",
+"parmesan cheese",
+"feta cheese",
+"goat cheese",
+"blue cheese",
+"colby cheese",
+"american cheese",
+"provolone cheese",
+"muenster cheese",
+"brie cheese",
+"gouda cheese",
+"havarti cheese",
+"romano cheese",
+"mexican cheese",
+"string cheese",
+"camembert cheese",
+"gorgonzola cheese",
+"cream cheese",
+"cottage cheese",
+"nut cheese"
+]
+},
+{
+"id": "yogurt",
+"en": "bowl of yogurt",
+"group": "dairy",
+"kcal_g": 0.622,
+"n5k": [
+"yogurt",
+"greek yogurt",
+"soy yogurt",
+"sour cream",
+"custard",
+"puddings",
+"mousse"
+]
+},
+{
+"id": "baked_sweet",
+"en": "a baked dessert (cake, brownie, cookie)",
+"group": "sweet",
+"kcal_g": 4.79,
+"n5k": [
+"brownies",
+"cookies",
+"chocolate chip cookies",
+"cakes",
+"cupcakes",
+"muffins",
+"scones",
+"donuts",
+"pastries",
+"croissants",
+"biscuits",
+"pies",
+"apple pie",
+"cheesecake",
+"chocolate cake",
+"carrot cake",
+"sandwich cookies",
+"turnover",
+"strudels",
+"cobbler",
+"fudge",
+"chocolate",
+"dark chocolate",
+"candies",
+"ice creams",
+"sorbet",
+"sundaes"
+]
+},
+{
+"id": "dressing",
+"en": "salad dressing or sauce drizzle",
+"group": "sauce",
+"kcal_g": 0.999,
+"n5k": [
+"vinaigrette",
+"ranch dressing",
+"caesar dressing",
+"salad dressing",
+"italian dressing",
+"french dressing",
+"mayonnaise",
+"barbecue sauce",
+"pesto",
+"teriyaki sauce",
+"pasta sauce",
+"pizza sauce",
+"gravy",
+"ketchup",
+"mustard",
+"soy sauce",
+"tahini",
+"chutney",
+"relish",
+"balsamic vinegar",
+"vinegar"
+]
+},
+{
+"id": "oil",
+"en": "olive oil",
+"group": "oil",
+"kcal_g": 8.834,
+"n5k": [
+"olive oil",
+"vegetable oil",
+"oil",
+"butter",
+"margarine",
+"fish oil"
+]
+},
+{
+"id": "syrup_sugar",
+"en": "syrup honey or sugar",
+"group": "sauce",
+"kcal_g": 3.659,
+"n5k": [
+"syrup",
+"maple syrup",
+"honey",
+"sugar",
+"brown sugar",
+"agave nectar",
+"jams",
+"peanut butter",
+"almond butter",
+"spreads",
+"flour",
+"corn starch",
+"cornmeal",
+"bread crumbs"
+]
+},
+{
+"id": "soup",
+"en": "a bowl of soup",
+"group": "dish",
+"kcal_g": 0.902,
+"n5k": [
+"broth",
+"chicken soup",
+"tomato soup",
+"miso soup",
+"chowders",
+"stews",
+"chili",
+"gumbo",
+"curries",
+"goulash"
+]
+},
+{
+"id": "dumpling",
+"en": "dumplings",
+"group": "mixed",
+"kcal_g": 2.321,
+"n5k": [
+"dumplings",
+"spring rolls",
+"egg rolls",
+"samosas",
+"empanadas",
+"tamales",
+"pot pies",
+"fritters",
+"tempura",
+"onion rings"
+]
+},
+{
+"id": "chips",
+"en": "chips or crackers",
+"group": "snack",
+"kcal_g": 4.365,
+"n5k": [
+"potato chips",
+"chips",
+"tortilla chips",
+"corn chips",
+"crackers",
+"pretzels",
+"popcorn",
+"rice cakes",
+"wafers",
+"nachos"
+]
+},
+{
+"id": "braised_pork",
+"en": "braised pork belly",
+"group": "protein",
+"kcal_g": 3.3,
+"n5k": []
+},
+{
+"id": "pork_cutlet",
+"en": "breaded fried pork cutlet",
+"group": "fried",
+"kcal_g": 2.9,
+"n5k": []
+},
+{
+"id": "fried_tofu",
+"en": "fried tofu",
+"group": "fried",
+"kcal_g": 2.2,
+"n5k": []
+},
+{
+"id": "braised_tofu",
+"en": "braised tofu",
+"group": "protein",
+"kcal_g": 1.3,
+"n5k": []
+},
+{
+"id": "tea_egg",
+"en": "braised tea egg",
+"group": "egg",
+"kcal_g": 1.5,
+"n5k": []
+},
+{
+"id": "stirfry_greens",
+"en": "stir-fried green vegetables",
+"group": "veg",
+"kcal_g": 0.55,
+"n5k": []
+},
+{
+"id": "chinese_cabbage",
+"en": "napa cabbage",
+"group": "veg",
+"kcal_g": 0.3,
+"n5k": []
+},
+{
+"id": "pickled_veg",
+"en": "pickled vegetables",
+"group": "veg",
+"kcal_g": 0.3,
+"n5k": []
+},
+{
+"id": "ground_pork_sauce",
+"en": "minced pork sauce over rice",
+"group": "protein",
+"kcal_g": 1.9,
+"n5k": []
+},
+{
+"id": "fish_ball",
+"en": "fish balls or meatballs",
+"group": "protein",
+"kcal_g": 1.5,
+"n5k": []
+},
+{
+"id": "scallion_pancake",
+"en": "scallion pancake",
+"group": "bread",
+"kcal_g": 3.0,
+"n5k": []
+},
+{
+"id": "steamed_bun",
+"en": "steamed bun",
+"group": "bread",
+"kcal_g": 2.3,
+"n5k": []
+},
+{
+"id": "beef_noodle_soup",
+"en": "beef noodle soup",
+"group": "dish",
+"kcal_g": 0.9,
+"n5k": []
+},
+{
+"id": "noodle_soup",
+"en": "noodle soup",
+"group": "dish",
+"kcal_g": 0.7,
+"n5k": []
+},
+{
+"id": "curry",
+"en": "curry with rice",
+"group": "dish",
+"kcal_g": 1.3,
+"n5k": []
+},
+{
+"id": "bubble_tea",
+"en": "bubble milk tea",
+"group": "drink",
+"kcal_g": 0.6,
+"n5k": []
+}
+]

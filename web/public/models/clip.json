@@ -26,7 +26,8 @@
  "mix": {
   "k": 3,
   "cum": 0.7,
-  "sure": 0.7
+  "sure": 0.7,
+  "lambda": 0.5
  },
  "templates": [
   "a photo of {}."

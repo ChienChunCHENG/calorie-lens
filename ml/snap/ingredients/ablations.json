@@ -1,0 +1,8 @@
+{
+ "const_median_fit": 0.4912823588170096,
+ "const350": 0.44413268920559207,
+ "dish_level_whole_image": 0.5229283052929379,
+ "area_only_no_labels": 0.4016388914323362,
+ "component_model": 0.3916451465966305,
+ "note": "median |err|/true on dev-val (n=143)"
+}

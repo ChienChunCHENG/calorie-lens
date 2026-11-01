@@ -1,5 +1,5 @@
 {
- "imgsz": 640,
+ "imgsz": 416,
  "input": "images",
  "output": "output0",
  "classes": [

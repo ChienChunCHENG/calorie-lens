@@ -1,19 +1,23 @@
+// Display helpers (English-only UI). Pure and unit-tested; no DOM.
 export const round10 = (x: number): number => Math.round(x / 10) * 10;
 
-/** "310–520" (10th–90th percentile rounded to 10); collapses to "≈310" when both ends round the same. */
+/** Best estimate, e.g. "~520" (rounded to 10). */
+export const fmtBest = (r: { p50: number }): string => `~${round10(r.p50)}`;
+
+/** "380–690" (10th–90th percentile rounded to 10); collapses to "≈380" when both ends round to the same value. */
 export function fmtRange(r: { p10: number; p90: number }): string {
   const a = round10(r.p10), b = round10(r.p90);
   return a === b ? `≈${a}` : `${a}–${b}`;
 }
 
-export const fmtKcal = (r: { p10: number; p90: number }): string => `${fmtRange(r)} kcal`;
+/** "~520 kcal" */
+export const fmtKcal = (r: { p50: number }): string => `${fmtBest(r)} kcal`;
 
-export function itemName(row: { en: string; zh?: string }): string { return row.zh || row.en; }
+/** English display name of a vocab row: `display` if present, else `en`; never zh. */
+export function itemName(row: { en: string; display?: string }): string { return row.display || row.en; }
 
-/** Displayed name: top-1 name plus 或類似 when the top-1 probability is below `mix.sure`. */
-export function displayName(name: string, unsure: boolean): string { return unsure ? `${name} 或類似` : name; }
-
-export function fmtTime(ts: number): string {
-  const d = new Date(ts);
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+/** Second name is shown only when its probability is >= 0.6 x the first's. Returns the index-1 candidate or null. */
+export function maybeSecond<T extends { p: number }>(cands: readonly T[] | undefined): T | null {
+  if (!cands || cands.length < 2 || !(cands[0].p > 0)) return null;
+  return cands[1].p >= 0.6 * cands[0].p ? cands[1] : null;
 }
