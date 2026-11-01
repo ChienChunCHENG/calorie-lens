@@ -332,4 +332,13 @@ requestAnimationFrame(frame);
 setTimeout(warm, 0);
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   navigator.serviceWorker.register(`${BASE}sw.js`).catch(() => { /* optional */ });
+  // The service worker adds the isolation headers; a page only gets them once it is controlled, so reload once.
+  if (!self.crossOriginIsolated) {
+    const reloadOnce = () => {
+      try { if (sessionStorage.getItem('cl-coi')) return; sessionStorage.setItem('cl-coi', '1'); } catch { return; }
+      location.reload();
+    };
+    if (navigator.serviceWorker.controller) reloadOnce();
+    else navigator.serviceWorker.addEventListener('controllerchange', reloadOnce, { once: true });
+  }
 }
