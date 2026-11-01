@@ -2,6 +2,8 @@
 import * as ort from 'onnxruntime-web';
 import { fetchAsset, fetchJson } from './assets.ts';
 import { LensEngine } from './pipeline.ts';
+import { prepareProtos } from './protos.ts';
+import type { ProtosFile } from './protos.ts';
 import type { Assets, ClipCfg, LensTrack, LocatorCfg, Runners } from './pipeline.ts';
 import type { VocabRow } from './classify.ts';
 import { f16ArrayToF32, f32ArrayToF16 } from './f16.ts';
@@ -78,7 +80,7 @@ async function createSession(buf: Uint8Array, probe: Probe): Promise<Sess> {
 async function load(base: string, ortBase: string | undefined, threads?: number): Promise<Loaded> {
   setupOrt(base, ortBase, threads);
   const m = `${base}models/`;
-  const files = ['vocab_emb.bin', 'locator.onnx', 'clip_image.onnx'];
+  const files = ['vocab_emb.bin', 'protos_emb.bin', 'locator.onnx', 'clip_image.onnx'];
   // One combined total: sizes from HEAD requests up front so the percentage never jumps backwards.
   const heads = await Promise.all(files.map(f => fetch(m + f, { method: 'HEAD' })
     .then(r => (r.ok && !(r.headers.get('content-type') || '').includes('text/html') ? Number(r.headers.get('content-length')) || 0 : 0)).catch(() => 0)));
@@ -89,16 +91,20 @@ async function load(base: string, ortBase: string | undefined, threads?: number)
     post({ type: 'progress', phase: 'download', loaded: Math.min(L, T), total: T });
   };
   post({ type: 'progress', phase: 'download', loaded: 0, total: heads.reduce((x, y) => x + y, 0) });
-  const [locator, clip, vocab, embBytes, locBuf, clipBuf] = await Promise.all([
+  const [locator, clip, vocab, embBytes, locBuf, clipBuf, protosFile, protoBytes] = await Promise.all([
     fetchJson<LocatorCfg>(m + 'locator.json'), fetchJson<ClipCfg>(m + 'clip.json'), fetchJson<VocabRow[]>(m + 'vocab.json'),
     fetchAsset(m + 'vocab_emb.bin', { prefer: 'cache', onProgress: prog('vocab_emb.bin') }),
     fetchAsset(m + 'locator.onnx', { prefer: 'cache', onProgress: prog('locator.onnx') }),
     fetchAsset(m + 'clip_image.onnx', { prefer: 'cache', onProgress: prog('clip_image.onnx') }),
+    fetchJson<ProtosFile>(m + 'protos.json'),
+    fetchAsset(m + 'protos_emb.bin', { prefer: 'cache', onProgress: prog('protos_emb.bin') }),
   ]);
   post({ type: 'progress', phase: 'init' });
   // fp16 little-endian -> Float32Array once.
   const u16 = new Uint16Array(embBytes.buffer.slice(embBytes.byteOffset, embBytes.byteOffset + embBytes.byteLength));
   const emb = f16ArrayToF32(u16);
+  const pu16 = new Uint16Array(protoBytes.buffer.slice(protoBytes.byteOffset, protoBytes.byteOffset + protoBytes.byteLength));
+  const protos = prepareProtos(protosFile, f16ArrayToF32(pu16), vocab.map(v => v.id));
   let loc = await createSession(locBuf, { input: locator.input, output: locator.output, size: locator.imgsz });
   let cl = await createSession(clipBuf, { input: clip.input, output: clip.output, size: clip.size });
 
@@ -130,7 +136,7 @@ async function load(base: string, ortBase: string | undefined, threads?: number)
       return d instanceof Float32Array ? d : t.type === 'float16' && d instanceof Uint16Array ? f16ArrayToF32(d) : Float32Array.from(d);
     },
   };
-  return { assets: { locator, clip, vocab, emb }, runners, backend: `${loc.backend}/${cl.backend}` };
+  return { assets: { locator, clip, vocab, emb, protos }, runners, backend: `${loc.backend}/${cl.backend}` };
 }
 
 let engine: LensEngine | null = null;

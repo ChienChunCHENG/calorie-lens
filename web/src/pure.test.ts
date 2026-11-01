@@ -5,6 +5,7 @@ import { f16ArrayToF32, f32ArrayToF16, f16ToF32 } from './f16.ts';
 import { decodeYolo, iou, letterboxParams, nms, selectBoxes, suppressContained } from './yolo.ts';
 import type { Detection } from './yolo.ts';
 import { clipTensor, cropRect, cropRGBA, fitSize, letterboxTensor, resizeRGBA } from './imageops.ts';
+import { prepareProtos, protoBoost } from './protos.ts';
 import { classify, l2normalize, softmax, similarities } from './classify.ts';
 import type { VocabRow } from './classify.ts';
 import { hashSeed, mixtureSamples, mulberry32, percentile, quantileArray, sampleQuantiles, sumRange, summarize } from './mixture.ts';
@@ -243,4 +244,17 @@ test('commonness prior reorders food candidates but not the gate', () => {
   assert.equal(vocab[base.cands[0].idx].id, 'knish');
   assert.equal(vocab[pri.cands[0].idx].id, 'steak');
   assert.equal(base.pNeg, pri.pNeg);
+});
+
+test('prototype boost lifts only the matching concept, and only above the threshold', () => {
+  const dim = 2, e = new Float32Array([1, 0]);
+  // concept 0 (2 prototypes) close to e, concept 1 far from it
+  const P = new Float32Array([1, 0, 0.8, 0.6, 0, 1]);
+  const f = { dim, n: 3, a: 1, c: 0.65, m: 3, offsets: [0, 2, 3],
+    concepts: [{ name: 'pizza', vocab_ids: ['pizza', 'missing'], neg: false }, { name: 'spoon', vocab_ids: ['neg_spoon'], neg: true }] };
+  const p = prepareProtos(f, P, ['pizza', 'salad', 'neg_spoon']);
+  const sims = protoBoost(new Float32Array([0.2, 0.2, 0.2]), e, p);
+  assert.ok(Math.abs(sims[0] - (0.2 + (0.9 - 0.65))) < 1e-6); // mean of top-2 cosines (1, 0.8) = 0.9
+  assert.ok(Math.abs(sims[1] - 0.2) < 1e-6); // no concept
+  assert.ok(Math.abs(sims[2] - 0.2) < 1e-6); // cosine 0 < c: no boost
 });

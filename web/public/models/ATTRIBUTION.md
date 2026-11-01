@@ -12,3 +12,4 @@
   free licences, used only for local testing), and the user's own phone screenshots.
 - **Commonness prior** (`lp` in `vocab.json`): food-frequency counts from the CDC NHANES 2021-2023 "What We Eat in America" dietary recall files (public domain). It ranks common foods above rare ones when the photo is ambiguous.
 - **Added staples** (36 rows, e.g. fish and chips, schnitzel, Caesar salad): values come from FNDDS where a clean match exists. The rest are composed from FNDDS components or estimated, and those are marked `est` in `ml/snap/prior/out/new_rows_sources.json`.
+- **Image prototypes** (`protos_emb.bin`, `protos.json`): MobileCLIP-S1 image embeddings of example photos from Food-101 (ETH Zürich, research dataset) and Open Images V7 (images CC BY 2.0). Only embeddings are shipped, never the photos. Built by `ml/snap/protos/build_protos.py`.

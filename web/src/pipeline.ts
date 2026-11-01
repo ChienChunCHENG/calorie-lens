@@ -1,5 +1,7 @@
 // Live lens engine: locate every frame, IoU-track boxes, classify new tracks and re-classify each every ~2 s, vote labels.
 // Model runners are injected, so it is testable without ONNX.
+import { protoBoost } from './protos.ts';
+import type { Protos } from './protos.ts';
 import { clipTensor, cropRect, cropRGBA, letterboxTensor } from './imageops.ts';
 import type { Rgba } from './imageops.ts';
 import { selectBoxes } from './yolo.ts';
@@ -21,7 +23,7 @@ export interface ClipCfg {
   interpolation?: string; mean: number[]; std: number[]; dim: number; logit_scale: number;
   gate: Gate; mix: Mix; template?: string;
 }
-export interface Assets { locator: LocatorCfg; clip: ClipCfg; vocab: VocabRow[]; emb: Float32Array }
+export interface Assets { locator: LocatorCfg; clip: ClipCfg; vocab: VocabRow[]; emb: Float32Array; protos?: Protos }
 export interface Runners {
   locate(data: Float32Array, size: number): Promise<{ data: ArrayLike<number>; dims: readonly number[] }>;
   embed(data: Float32Array, size: number): Promise<Float32Array>;
@@ -96,7 +98,9 @@ export class LensEngine {
       const c0 = performance.now();
       const rect = cropRect(t.box, img.w, img.h, L.crop_pad);
       const emb = l2normalize(await this.run.embed(clipTensor(cropRGBA(img, rect), C), C.size));
-      const cl = classify(similarities(emb, this.a.emb, this.a.vocab.length, C.dim), this.a.vocab, C.logit_scale, C.gate, C.mix);
+      const sims = similarities(emb, this.a.emb, this.a.vocab.length, C.dim);
+      if (this.a.protos) protoBoost(sims, emb, this.a.protos);
+      const cl = classify(sims, this.a.vocab, C.logit_scale, C.gate, C.mix);
       t.lastCls = now; this.stats.classified++; this.stats.clsMs += performance.now() - c0;
       this.vote(t, cl);
     }
