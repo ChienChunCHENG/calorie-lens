@@ -22,3 +22,5 @@ ml/snap/prior/out/vocab.json
 ml/snap/prior/out/vocab_emb.bin
 ml/snap/**/*.npy
 ml/snap/protos/out/
+
+**/mobileclip_blt.ts
